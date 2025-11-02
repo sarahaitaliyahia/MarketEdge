@@ -67,33 +67,3 @@ export interface StreamingAnalysisUpdate {
   stepStatus: "in-progress" | "completed"
   stepData?: any
 }
-
-/**
- * Types pour le heat map des entreprises (/lookup)
- */
-export interface CompanyData {
-  Ticker: string
-  PredictedPosition: number // -1 à 1
-  reasoning: string
-  confidence_level: number // 0 à 1
-  // Optional metadata to support heatmap grouping and sizing
-  sector?: string
-  market_cap_basic?: number // used to size tiles (e.g. market cap in millions)
-  change?: number // optional percent change (e.g. -0.05 for -5%)
-}
-
-export interface AISynthesis {
-  summary: string
-  recommendations: string
-  metadata: {
-    model_used: string
-    prompt_mode: string
-    language: string
-    execution_time_seconds: number
-  }
-}
-
-export interface LookupResponse {
-  companies: CompanyData[]
-  ai_synthesis: AISynthesis
-}
