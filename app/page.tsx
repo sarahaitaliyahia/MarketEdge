@@ -2,17 +2,17 @@
 
 import type React from "react"
 
-import { User, Plus, Upload, FileText, TrendingUp, PieChart, X, ChevronDown, ChevronUp } from "lucide-react"
+import { User, Plus, Upload, FileText, TrendingUp, PieChart, X, ChevronDown, ChevronUp, MessageSquare } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
 import { useAnalysis } from "@/hooks/use-analysis"
 import { DotLottieReact } from '@lottiefiles/dotlottie-react'
 import GeographicImpact from "@/components/analysis/GeographicImpact"
 import SectorImpact from "@/components/analysis/SectorImpact"
-import ImpactedCountries from "@/components/analysis/ImpactedCountries"
 import KeyFindingsSection from "@/components/analysis/KeyFindingsSection"
 import PotentialRisks from "@/components/analysis/PotentialRisks"
 import AnalystCommentary from "@/components/analysis/AnalystCommentary"
+import AnalysisChatbox from "@/components/analysis/AnalysisChatbox"
 
 interface AnalysisItem {
   id: string
@@ -56,6 +56,7 @@ export default function Dashboard() {
   const [isEnhancedOpen, setIsEnhancedOpen] = useState(true)
   const [isMarketImpactOpen, setIsMarketImpactOpen] = useState(false)
   const [isRiskLevelOpen, setIsRiskLevelOpen] = useState(false)
+  const [isChatOpen, setIsChatOpen] = useState(false)
 
   // Use the analysis hook
   const {
@@ -148,14 +149,16 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/20 overflow-x-hidden w-full">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/20 overflow-x-hidden w-full relative">
       {/* Header */}
       <header className="border-b border-border bg-white/80 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
         <div className="flex items-center justify-between px-6 py-4">
           <div className="flex items-center gap-2 w-48">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 text-white font-semibold text-sm shadow-md">
-              ME
-            </div>
+            <img 
+              src="/logo.svg" 
+              alt="MarketEdge Logo" 
+              className="h-8 w-8 shadow-md"
+            />
             <h1 className="text-xl font-semibold text-foreground">MarketEdge</h1>
           </div>
 
@@ -182,9 +185,15 @@ export default function Dashboard() {
         </div>
       </header>
 
-      <div className="flex overflow-x-hidden">
+      <div className="flex overflow-x-hidden" style={{ height: 'calc(100vh - 64px)' }}>
         {/* Main Content */}
-        <main className="flex-1 p-8 max-w-6xl mx-auto w-full overflow-x-hidden">
+        <main 
+          className={`flex-1 px-4 py-8 w-full overflow-y-auto overflow-x-hidden transition-all duration-300 ${
+            isChatOpen && analysisResults ? 'mr-[350px]' : ''
+          }`}
+          style={{ maxWidth: isChatOpen && analysisResults ? 'calc(100% - 350px)' : '100%' }}
+        >
+          <div className="max-w-[1900px] mx-auto">
           {activeTab === "reports" ? (
             <div className="animate-in fade-in duration-700">
               <h2 className="text-2xl font-bold text-foreground mb-6">Recent Analysis</h2>
@@ -215,16 +224,9 @@ export default function Dashboard() {
                   <h2 className="text-3xl font-bold text-foreground">{analysisResults.title}</h2>
                 </div>
                 <p className="text-foreground/70 mb-6 text-justify leading-relaxed">{analysisResults.summary}</p>
-                
-                {/* Geographic Impact - Simple badges */}
-                {enhancedData?.law_analysis_output?.impact?.countries_affected && (
-                  <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300">
-                    <GeographicImpact countries={enhancedData.law_analysis_output.impact.countries_affected} />
-                  </div>
-                )}
               </div>
 
-              <div className="space-y-6">
+              <div className="space-y-6 xl:space-y-8">
                 {/* Key Provisions - Affiche les données enrichies */}
                 <div className={`bg-white p-6 rounded-lg border border-border shadow-sm ${enhancedData ? 'animate-in fade-in slide-in-from-bottom-4 duration-500 delay-700' : ''}`}>
                   <div 
@@ -313,12 +315,52 @@ export default function Dashboard() {
                           <AnalystCommentary commentary={enhancedData.law_analysis_output.analysis_notes.analyst_comments} />
                         )}
                         
-                        {/* Impacted Countries - Detailed */}
+                        {/* Geographic Impact */}
                         {enhancedData.law_analysis_output.impact?.countries_affected && (
-                          <ImpactedCountries countries={enhancedData.law_analysis_output.impact.countries_affected} />
+                          <div>
+                            <h5 className="font-semibold text-foreground mb-3">Geographic Impact</h5>
+                            <GeographicImpact countries={enhancedData.law_analysis_output.impact.countries_affected} />
+                          </div>
                         )}
                       </div>
                     )}
+                  </div>
+                </div>
+
+                {/* Risk Assessment */}
+                <div className={`bg-white p-6 rounded-lg border border-border shadow-sm ${enhancedData ? 'animate-in fade-in slide-in-from-bottom-4 duration-500 delay-1300' : ''}`}>
+                  <div 
+                    className="flex items-center gap-4 cursor-pointer hover:bg-gray-50 -m-6 p-6 rounded-lg transition-colors"
+                    onClick={() => setIsRiskLevelOpen(!isRiskLevelOpen)}
+                  >
+                    <div className="h-12 w-12 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
+                      <PieChart className="h-6 w-6 text-purple-600" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-foreground mb-1">Risk Assessment</h4>
+                      <p className="text-sm text-foreground/60">
+                        Overall risk level and key risk factors
+                      </p>
+                    </div>
+                    <div className="text-gray-400">
+                      {isRiskLevelOpen ? (
+                        <ChevronUp className="h-5 w-5" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5" />
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div 
+                    className={`overflow-hidden transition-all duration-500 ease-in-out ${
+                      isRiskLevelOpen ? 'max-h-[10000px] opacity-100' : 'max-h-0 opacity-0'
+                    }`}
+                  >
+                    <div className="mt-4">
+                      <p className="text-center text-foreground/40 italic py-8">
+                        Risk assessment data will be available soon
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -452,6 +494,7 @@ export default function Dashboard() {
               )}
             </>
           )}
+          </div>
         </main>
       </div>
 
@@ -535,40 +578,33 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                {/* Risk Level */}
-                <div className="bg-gradient-to-br from-purple-50 to-purple-100/50 p-5 rounded-xl border border-purple-200">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
-                      <PieChart className="h-5 w-5 text-purple-600" />
-                    </div>
-                    <h4 className="font-semibold text-foreground text-lg">Risk Assessment</h4>
-                  </div>
-                  <div className="space-y-3 text-sm text-foreground/80">
-                    <p className="font-medium">Risk Analysis Summary:</p>
-                    <div className="grid grid-cols-2 gap-3 mb-3">
-                      <div className="bg-white/60 p-3 rounded-lg">
-                        <p className="font-medium text-purple-700">Overall Risk</p>
-                        <p className="text-lg font-bold">Medium</p>
-                      </div>
-                      <div className="bg-white/60 p-3 rounded-lg">
-                        <p className="font-medium text-purple-700">Volatility Index</p>
-                        <p className="text-lg font-bold">6.5/10</p>
-                      </div>
-                    </div>
-                    <p className="font-medium">Key Risk Factors:</p>
-                    <ul className="list-disc list-inside space-y-2 ml-2">
-                      <li>Implementation timeline uncertainty (6-12 month window)</li>
-                      <li>Political opposition may delay or modify provisions</li>
-                      <li>Technology readiness concerns in certain sectors</li>
-                      <li>Supply chain constraints for clean energy components</li>
-                    </ul>
-                    <p className="pt-2"><span className="font-medium">Recommendation:</span> Monitor legislative progress closely, consider hedging strategies for exposed positions</p>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
         </div>
+      )}
+
+      {/* Side Chat Button - Only show when session_id is available */}
+      {analysisResults && enhancedData?.session_id && !selectedAnalysis && !isChatOpen && (
+        <button
+          onClick={() => setIsChatOpen(true)}
+          className="fixed top-1/2 right-0 -translate-y-1/2 z-40 py-6 px-3 bg-gradient-to-b from-blue-600 to-indigo-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:px-4 flex flex-col items-center justify-center gap-3 rounded-l-xl group"
+          aria-label="Open Financial Assistant"
+        >
+          <MessageSquare className="h-7 w-7 group-hover:scale-110 transition-transform" />
+          <span className="text-[13px] font-semibold tracking-wide" style={{ writingMode: 'vertical-rl', letterSpacing: '0.05em' }}>
+            FINANCIAL ASSISTANT
+          </span>
+        </button>
+      )}
+
+      {/* Chat Component - Only available when session_id is available */}
+      {analysisResults && enhancedData?.session_id && !selectedAnalysis && (
+        <AnalysisChatbox
+          sessionId={enhancedData.session_id}
+          isOpen={isChatOpen}
+          onClose={() => setIsChatOpen(false)}
+        />
       )}
     </div>
   )
