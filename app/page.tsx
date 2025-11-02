@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { User, Plus, Upload, FileText, TrendingUp, PieChart, X } from "lucide-react"
+import { User, Plus, Upload, FileText, TrendingUp, PieChart, X, ChevronDown, ChevronUp } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
 
@@ -53,6 +53,8 @@ export default function Dashboard() {
     sectors: string[]
     sentiment: "Bullish" | "Neutral" | "Bearish"
   } | null>(null)
+  const [enhancedData, setEnhancedData] = useState<any>(null)
+  const [isEnhancedOpen, setIsEnhancedOpen] = useState(true)
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -88,40 +90,161 @@ export default function Dashboard() {
     
     // Fade out delay
     await new Promise((resolve) => setTimeout(resolve, 700))
-    
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 1300))
 
-    const sentiments = ["Bullish", "Neutral", "Bearish"] as const
-    const randomSentiment = sentiments[Math.floor(Math.random() * sentiments.length)]
-    const sectors = ["Technology", "Healthcare", "Finance", "Energy", "Manufacturing"][Math.floor(Math.random() * 5)]
+    try {
+      // Lire le contenu du fichier HTML
+      let htmlContent = await uploadedFile.text()
 
-    const result = {
-      title: uploadedFile.name.replace(".html", ""),
-      summary:
-        "This law proposal will have significant market implications. Key findings indicate potential impact on affected sectors and investment opportunities.",
-      sectors: [sectors],
-      sentiment: randomSentiment,
+      console.log("Original HTML content length:", htmlContent.length)
+
+      // Nettoyer le HTML intelligemment pour réduire la taille
+      // 1. Supprimer les scripts, styles, et commentaires (pas utiles pour l'analyse)
+      htmlContent = htmlContent
+        .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+        .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+        .replace(/<!--[\s\S]*?-->/g, '')
+        .replace(/\s+/g, ' ') // Réduire les espaces multiples
+        .trim()
+
+      console.log("After cleaning, HTML length:", htmlContent.length)
+
+      const MAX_LENGTH = 100000
+      if (htmlContent.length > MAX_LENGTH) {
+        console.log(`Truncating content from ${htmlContent.length} to ${MAX_LENGTH} characters`)
+        htmlContent = htmlContent.substring(0, MAX_LENGTH)
+      }
+
+      console.log("Sending request to API...")
+      console.log("Final HTML content length:", htmlContent.length)
+
+      // Étape 1: Appeler /analyse pour obtenir l'analyse de base
+      console.log("Step 1: Calling /analyse...")
+      const analyseResponse = await fetch(
+        "/api/analyse",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            html_content: htmlContent,
+          }),
+        }
+      )
+
+      console.log("Analyse response status:", analyseResponse.status)
+
+      if (!analyseResponse.ok) {
+        const errorText = await analyseResponse.text()
+        console.error("API error response:", errorText)
+        throw new Error(`API error: ${analyseResponse.status} - ${errorText}`)
+      }
+
+      const analyseResult = await analyseResponse.json()
+      console.log("Analyse result:", analyseResult)
+
+      // Étape 2: Appeler /enhance pour enrichir les résultats (optionnel)
+      console.log("Step 2: Calling /enhance...")
+      let apiResult = analyseResult
+      
+      try {
+        const enhanceResponse = await fetch(
+          "/api/enhance",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              law_analysis_output: analyseResult.law_analysis_output,
+            }),
+          }
+        )
+
+        if (enhanceResponse.ok) {
+          const enhanceResult = await enhanceResponse.json()
+          console.log("Enhanced result:", enhanceResult)
+          apiResult = enhanceResult
+          // Stocker les données enrichies séparément
+          setEnhancedData(enhanceResult)
+        } else {
+          const errorText = await enhanceResponse.text()
+          console.warn("Enhancement failed, using base analysis:", errorText)
+        }
+      } catch (enhanceError) {
+        console.warn("Enhancement endpoint not available, using base analysis:", enhanceError)
+      }
+
+      console.log("Final API result:", apiResult)
+
+      // Extraire les données de law_analysis_output
+      const lawAnalysis = apiResult.law_analysis_output || {}
+      const lawMetadata = lawAnalysis.law_metadata || {}
+      const impact = lawAnalysis.impact || {}
+      const analysisNotes = lawAnalysis.analysis_notes || {}
+      
+      // Déterminer le sentiment basé sur les findings et risks
+      const keyFindings = analysisNotes.key_findings || []
+      const potentialRisks = analysisNotes.potential_risks || []
+      let sentiment: "Bullish" | "Neutral" | "Bearish" = "Neutral"
+      
+      // Logique simple : plus de findings positifs = Bullish, plus de risques = Bearish
+      if (keyFindings.length > potentialRisks.length * 1.5) {
+        sentiment = "Bullish"
+      } else if (potentialRisks.length > keyFindings.length * 1.5) {
+        sentiment = "Bearish"
+      }
+      
+      // Extraire les noms des secteurs depuis les objets {sector, impact}
+      const sectorsArray = impact.sectors || []
+      const sectorNames = sectorsArray.map((s: any) => 
+        typeof s === 'string' ? s : s.sector || s.name || 'Unknown'
+      )
+      
+      // Mapper la réponse de l'API vers le format attendu
+      const result = {
+        title: uploadedFile.name.replace(".html", ""),
+        summary: lawMetadata.summary || analysisNotes.analyst_comments || "Analyse complétée avec succès.",
+        sectors: sectorNames.length > 0 ? sectorNames : ["Technology", "Finance"],
+        sentiment: sentiment,
+      }
+      
+      console.log("Mapped result:", result)
+
+      setAnalysisResults(result)
+      
+      // Small delay before showing results to ensure clean transition
+      await new Promise((resolve) => setTimeout(resolve, 50))
+      setIsTransitioning(false)
+
+      // Add to recent analysis
+      const newAnalysis: AnalysisItem = {
+        id: Date.now().toString(),
+        title: result.title,
+        description: result.summary.substring(0, 50) + "...",
+        sentiment: result.sentiment,
+        timestamp: "Just now",
+        color: result.sentiment === "Bullish" ? "green" : result.sentiment === "Neutral" ? "yellow" : "red",
+      }
+
+      setRecentAnalysis([newAnalysis, ...recentAnalysis])
+    } catch (error) {
+      console.error("Error during analysis:", error)
+      
+      // Message d'erreur plus détaillé
+      let errorMessage = "Une erreur s'est produite lors de l'analyse."
+      
+      if (error instanceof TypeError && error.message === "Failed to fetch") {
+        errorMessage = "Erreur de connexion à l'API. Vérifiez :\n1. Que l'API est accessible\n2. Les paramètres CORS de l'API\n3. Votre connexion internet"
+      } else if (error instanceof Error) {
+        errorMessage = `Erreur: ${error.message}`
+      }
+      
+      alert(errorMessage)
+      setIsTransitioning(false)
+    } finally {
+      setIsAnalyzing(false)
     }
-
-    setAnalysisResults(result)
-    
-    // Small delay before showing results to ensure clean transition
-    await new Promise((resolve) => setTimeout(resolve, 50))
-    setIsTransitioning(false)
-
-    // Add to recent analysis
-    const newAnalysis: AnalysisItem = {
-      id: Date.now().toString(),
-      title: result.title,
-      description: result.summary.substring(0, 50) + "...",
-      sentiment: result.sentiment,
-      timestamp: "Just now",
-      color: randomSentiment === "Bullish" ? "green" : randomSentiment === "Neutral" ? "yellow" : "red",
-    }
-
-    setRecentAnalysis([newAnalysis, ...recentAnalysis])
-    setIsAnalyzing(false)
   }
 
   const handleAddNew = () => {
@@ -129,6 +252,7 @@ export default function Dashboard() {
     setTimeout(() => {
       setUploadedFile(null)
       setAnalysisResults(null)
+      setEnhancedData(null)
       setTimeout(() => {
         setIsTransitioning(false)
       }, 50)
@@ -216,14 +340,7 @@ export default function Dashboard() {
 
               <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-8 mb-8 border border-blue-200 shadow-xl">
                 <h2 className="text-3xl font-bold text-foreground mb-4">{analysisResults.title}</h2>
-                <div className="mb-4">
-                  <span
-                    className={`px-3 py-1 text-sm font-semibold rounded ${getSentimentStyles(analysisResults.sentiment)}`}
-                  >
-                    {analysisResults.sentiment}
-                  </span>
-                </div>
-                <p className="text-foreground/70 mb-4">{analysisResults.summary}</p>
+                <p className="text-foreground/70 mb-4 text-justify">{analysisResults.summary}</p>
                 <div>
                   <p className="text-sm font-semibold text-foreground mb-2">Affected Sectors:</p>
                   <div className="flex flex-wrap gap-2">
@@ -237,16 +354,193 @@ export default function Dashboard() {
               </div>
 
               <div className="space-y-6">
-                {/* Key Provisions */}
+                {/* Key Provisions - Affiche les données enrichies */}
                 <div className="bg-white p-6 rounded-lg border border-border shadow-sm">
-                  <div className="flex items-center gap-4">
+                  <div 
+                    className="flex items-center gap-4 mb-4 cursor-pointer hover:bg-gray-50 -m-6 p-6 rounded-lg transition-colors"
+                    onClick={() => setIsEnhancedOpen(!isEnhancedOpen)}
+                  >
                     <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
                       <FileText className="h-6 w-6 text-blue-600" />
                     </div>
-                    <div>
-                      <h4 className="font-semibold text-foreground mb-1">Key Provisions</h4>
-                      <p className="text-sm text-foreground/60">5 major provisions identified</p>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-foreground mb-1">Key Findings & Analysis</h4>
+                      <p className="text-sm text-foreground/60">
+                        {enhancedData ? 'Comprehensive insights from AI analysis' : 'Loading enhanced data...'}
+                      </p>
                     </div>
+                    <div className="text-gray-400">
+                      {isEnhancedOpen ? (
+                        <ChevronUp className="h-5 w-5" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5" />
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div 
+                    className={`overflow-hidden transition-all duration-500 ease-in-out ${
+                      isEnhancedOpen ? 'max-h-[10000px] opacity-100' : 'max-h-0 opacity-0'
+                    }`}
+                  >
+                    {enhancedData && enhancedData.law_analysis_output && (
+                      <div className="mt-4 space-y-6">
+                      {/* Key Findings */}
+                      {enhancedData.law_analysis_output.analysis_notes?.key_findings && (
+                        <div className="space-y-3">
+                          <h5 className="font-semibold text-foreground flex items-center gap-2">
+                            <span className="h-6 w-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs">
+                              {enhancedData.law_analysis_output.analysis_notes.key_findings.length}
+                            </span>
+                            Key Findings
+                          </h5>
+                          <ul className="space-y-2">
+                            {enhancedData.law_analysis_output.analysis_notes.key_findings.map((finding: string, i: number) => (
+                              <li key={i} className="flex gap-2 text-sm text-foreground/80">
+                                <span className="text-blue-600 font-bold mt-0.5">•</span>
+                                <span>{finding}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      
+                      {/* Potential Risks */}
+                      {enhancedData.law_analysis_output.analysis_notes?.potential_risks && (
+                        <div className="space-y-3">
+                          <h5 className="font-semibold text-foreground flex items-center gap-2">
+                            <span className="h-6 w-6 rounded-full bg-red-600 text-white flex items-center justify-center text-xs">
+                              {enhancedData.law_analysis_output.analysis_notes.potential_risks.length}
+                            </span>
+                            Potential Risks
+                          </h5>
+                          <ul className="space-y-2">
+                            {enhancedData.law_analysis_output.analysis_notes.potential_risks.map((risk: string, i: number) => (
+                              <li key={i} className="flex gap-2 text-sm text-foreground/80">
+                                <span className="text-red-600 font-bold mt-0.5">⚠</span>
+                                <span>{risk}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      
+                      {/* Analyst Comments */}
+                      {enhancedData.law_analysis_output.analysis_notes?.analyst_comments && (
+                        <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-200">
+                          <h5 className="font-semibold text-indigo-900 mb-2">Analyst Commentary</h5>
+                          <p className="text-sm text-indigo-800 leading-relaxed">
+                            {enhancedData.law_analysis_output.analysis_notes.analyst_comments}
+                          </p>
+                        </div>
+                      )}
+                      
+                      {/* Confidence Metrics */}
+                      {enhancedData.law_analysis_output.confidence_metrics && (
+                        <div className="bg-gray-50 p-4 rounded-lg">
+                          <h5 className="font-semibold text-foreground mb-3">Confidence Metrics</h5>
+                          <div className="grid grid-cols-2 gap-3">
+                            {enhancedData.law_analysis_output.confidence_metrics.model_confidence && (
+                              <div>
+                                <p className="text-xs text-foreground/60 mb-1">Model Confidence</p>
+                                <div className="flex items-center gap-2">
+                                  <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                    <div 
+                                      className="h-full bg-blue-600 rounded-full transition-all"
+                                      style={{ width: `${enhancedData.law_analysis_output.confidence_metrics.model_confidence * 100}%` }}
+                                    />
+                                  </div>
+                                  <span className="text-sm font-semibold text-foreground">
+                                    {Math.round(enhancedData.law_analysis_output.confidence_metrics.model_confidence * 100)}%
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+                            {enhancedData.law_analysis_output.confidence_metrics.data_completeness && (
+                              <div>
+                                <p className="text-xs text-foreground/60 mb-1">Data Completeness</p>
+                                <div className="flex items-center gap-2">
+                                  <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                    <div 
+                                      className="h-full bg-green-600 rounded-full transition-all"
+                                      style={{ width: `${enhancedData.law_analysis_output.confidence_metrics.data_completeness * 100}%` }}
+                                    />
+                                  </div>
+                                  <span className="text-sm font-semibold text-foreground">
+                                    {Math.round(enhancedData.law_analysis_output.confidence_metrics.data_completeness * 100)}%
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+                            {enhancedData.law_analysis_output.confidence_metrics.legal_text_similarity && (
+                              <div>
+                                <p className="text-xs text-foreground/60 mb-1">Legal Text Similarity</p>
+                                <div className="flex items-center gap-2">
+                                  <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                    <div 
+                                      className="h-full bg-purple-600 rounded-full transition-all"
+                                      style={{ width: `${enhancedData.law_analysis_output.confidence_metrics.legal_text_similarity * 100}%` }}
+                                    />
+                                  </div>
+                                  <span className="text-sm font-semibold text-foreground">
+                                    {Math.round(enhancedData.law_analysis_output.confidence_metrics.legal_text_similarity * 100)}%
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+                            {enhancedData.law_analysis_output.confidence_metrics.explanability_score && (
+                              <div>
+                                <p className="text-xs text-foreground/60 mb-1">Explainability Score</p>
+                                <div className="flex items-center gap-2">
+                                  <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                    <div 
+                                      className="h-full bg-orange-600 rounded-full transition-all"
+                                      style={{ width: `${enhancedData.law_analysis_output.confidence_metrics.explanability_score * 100}%` }}
+                                    />
+                                  </div>
+                                  <span className="text-sm font-semibold text-foreground">
+                                    {Math.round(enhancedData.law_analysis_output.confidence_metrics.explanability_score * 100)}%
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Impact Tags */}
+                      {enhancedData.law_analysis_output.impact?.related_tags_macro && (
+                        <div className="space-y-3">
+                          <h5 className="font-semibold text-foreground">Macro Tags</h5>
+                          <div className="flex flex-wrap gap-2">
+                            {enhancedData.law_analysis_output.impact.related_tags_macro.map((tag: string, i: number) => (
+                              <span key={i} className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-medium">
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {enhancedData.law_analysis_output.impact?.related_tags_micro && (
+                        <div className="space-y-3">
+                          <h5 className="font-semibold text-foreground">Micro Tags</h5>
+                          <div className="flex flex-wrap gap-2">
+                            {enhancedData.law_analysis_output.impact.related_tags_micro.slice(0, 10).map((tag: string, i: number) => (
+                              <span key={i} className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-xs font-medium">
+                                {tag}
+                              </span>
+                            ))}
+                            {enhancedData.law_analysis_output.impact.related_tags_micro.length > 10 && (
+                              <span className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-xs font-medium">
+                                +{enhancedData.law_analysis_output.impact.related_tags_micro.length - 10} more
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    )}
                   </div>
                 </div>
 
