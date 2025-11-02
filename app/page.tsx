@@ -83,7 +83,7 @@ export default function Dashboard() {
       if (validExtensions.includes(fileExtension)) {
         setUploadedFile(file)
       } else {
-        alert("Please upload a valid document file (HTML, TXT, XML, or PDF)")
+        alert("Please browse for a valid document file (HTML, TXT, XML, or PDF)")
       }
     }
   }
@@ -105,7 +105,7 @@ export default function Dashboard() {
       if (validExtensions.includes(fileExtension)) {
         setUploadedFile(file)
       } else {
-        alert("Please upload a valid document file (HTML, TXT, XML, or PDF)")
+        alert("Please browse for a valid document file (HTML, TXT, XML, or PDF)")
       }
     }
   }
@@ -170,13 +170,13 @@ export default function Dashboard() {
               onClick={() => setActiveTab("home")}
               className={`text-sm font-medium transition-all ${activeTab === "home" ? "text-foreground" : "text-foreground/60 hover:text-foreground"}`}
             >
-              Home
+              Analysis Workspace
             </button>
             <button
               onClick={() => setActiveTab("reports")}
               className={`text-sm font-medium transition-all ${activeTab === "reports" ? "text-foreground" : "text-foreground/60 hover:text-foreground"}`}
             >
-              Reports
+              Analysis History
             </button>
           </nav>
 
@@ -193,7 +193,7 @@ export default function Dashboard() {
         <main className="flex-1 p-8 max-w-6xl mx-auto w-full overflow-x-hidden">
           {activeTab === "reports" ? (
             <div className="animate-in fade-in duration-700">
-              <h2 className="text-2xl font-bold text-foreground mb-6">Recent Analysis</h2>
+              <h2 className="text-2xl font-bold text-foreground mb-6">Analysis Archive</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {recentAnalysis.map((item) => (
                   <div
@@ -213,7 +213,7 @@ export default function Dashboard() {
           ) : analysisResults ? (
             <div className={`max-w-4xl mx-auto transition-all duration-700 ${isTransitioning ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
               <button onClick={handleAddNew} className="mb-6 text-blue-600 hover:text-blue-700 flex items-center gap-1 transition-all hover:gap-2">
-                <X className="h-4 w-4" /> New Analysis
+                <X className="h-4 w-4" /> ← New Analysis Session
               </button>
 
               <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-8 mb-8 border border-blue-200 shadow-xl animate-in fade-in slide-in-from-top-4 duration-500">
@@ -222,7 +222,7 @@ export default function Dashboard() {
                 </div>
                 <p className="text-foreground/70 mb-6 text-justify leading-relaxed">{analysisResults.summary}</p>
                 
-                {/* Geographic Impact - Simple badges */}
+                {/* Geographic Exposure Distribution - Simple badges */}
                 {enhancedData?.law_analysis_output?.impact?.countries_affected && (
                   <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300">
                     <GeographicImpact countries={enhancedData.law_analysis_output.impact.countries_affected} />
@@ -231,7 +231,7 @@ export default function Dashboard() {
               </div>
 
               <div className="space-y-6">
-                {/* Key Provisions - Affiche les données enrichies */}
+                {/* Legislative Analysis Summary */}
                 <div className={`bg-white p-6 rounded-lg border border-border shadow-sm ${enhancedData ? 'animate-in fade-in slide-in-from-bottom-4 duration-500 delay-700' : ''}`}>
                   <div 
                     className="flex items-center gap-4 cursor-pointer hover:bg-gray-50 -m-6 p-6 rounded-lg transition-colors"
@@ -241,9 +241,9 @@ export default function Dashboard() {
                       <FileText className="h-6 w-6 text-blue-600" />
                     </div>
                     <div className="flex-1">
-                      <h4 className="font-semibold text-foreground mb-1">Key Findings & Analysis</h4>
+                      <h4 className="font-semibold text-foreground mb-1">Legislative Analysis Summary</h4>
                       <p className="text-sm text-foreground/60">
-                        {enhancedData ? 'Comprehensive insights from AI analysis' : 'Loading enhanced data...'}
+                        {enhancedData ? 'Parsed provisions, impact metrics, and confidence indicators' : 'Loading enhanced data...'}
                       </p>
                     </div>
                     <div className="text-gray-400">
@@ -273,7 +273,7 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                {/* Market Impact */}
+                {/* Cross-Sectoral Impact Assessment */}
                 <div className={`bg-white p-6 rounded-lg border border-border shadow-sm ${enhancedData ? 'animate-in fade-in slide-in-from-bottom-4 duration-500 delay-1000' : ''}`}>
                   <div 
                     className="flex items-center gap-4 cursor-pointer hover:bg-gray-50 -m-6 p-6 rounded-lg transition-colors"
@@ -283,9 +283,9 @@ export default function Dashboard() {
                       <TrendingUp className="h-6 w-6 text-green-600" />
                     </div>
                     <div className="flex-1">
-                      <h4 className="font-semibold text-foreground mb-1">Market Impact Analysis</h4>
+                      <h4 className="font-semibold text-foreground mb-1">Cross-Sectoral Impact Assessment</h4>
                       <p className="text-sm text-foreground/60">
-                        {enhancedData ? 'Sector impacts, risks, and detailed country analysis' : 'Loading data...'}
+                        {enhancedData ? 'Sector exposure quantification, risk vectors, and geographic impact distribution' : 'Loading data...'}
                       </p>
                     </div>
                     <div className="text-gray-400">
@@ -304,22 +304,22 @@ export default function Dashboard() {
                   >
                     {enhancedData && enhancedData.law_analysis_output && (
                       <div className="mt-4 space-y-6">
-                        {/* Sector Impact Analysis */}
+                        {/* Sector Exposure Heatmap */}
                         {enhancedData.law_analysis_output.impact?.sectors && (
                           <SectorImpact sectors={enhancedData.law_analysis_output.impact.sectors} />
                         )}
                         
-                        {/* Potential Risks */}
+                        {/* Regulatory & Compliance Risk Factors */}
                         {enhancedData.law_analysis_output.analysis_notes?.potential_risks && (
                           <PotentialRisks risks={enhancedData.law_analysis_output.analysis_notes.potential_risks} />
                         )}
                         
-                        {/* Analyst Commentary */}
+                        {/* Synthesized Analysis Notes */}
                         {enhancedData.law_analysis_output.analysis_notes?.analyst_comments && (
                           <AnalystCommentary commentary={enhancedData.law_analysis_output.analysis_notes.analyst_comments} />
                         )}
                         
-                        {/* Impacted Countries - Detailed */}
+                        {/* Country-Level Impact Breakdown */}
                         {enhancedData.law_analysis_output.impact?.countries_affected && (
                           <ImpactedCountries countries={enhancedData.law_analysis_output.impact.countries_affected} />
                         )}
@@ -358,20 +358,20 @@ export default function Dashboard() {
                       autoplay
                     />
                   </div>
-                  <p className="text-sm text-foreground/60 font-medium">Processing your document...</p>
+                  <p className="text-sm text-foreground/60 font-medium">Executing analysis pipeline • Estimated time: 2-3 min</p>
                 </div>
               ) : (
                 <div className={`mb-8 transition-all duration-700 ${isTransitioning ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
                   <div className="mb-6 mt-0">
-                    <h2 className="text-3xl font-bold text-center text-foreground mb-2">Analyze New Law Proposal</h2>
+                    <h2 className="text-3xl font-bold text-center text-foreground mb-2">Legislative Document Analysis Pipeline</h2>
                     <p className="text-center text-foreground/60">
-                      Upload a law proposal document (HTML, TXT, XML, PDF) to get AI-powered market impact analysis
+                      Ingest legislative documents for cross-sectoral impact assessment and portfolio exposure modeling
                     </p>
                   </div>
 
-                  {/* AI Analysis Pipeline */}
+                  {/* Multi-Stage Processing Framework */}
                   <div className="mb-6">
-                    <h3 className="text-lg font-semibold text-foreground mb-6 text-center">AI Analysis Pipeline</h3>
+                    <h3 className="text-lg font-semibold text-foreground mb-6 text-center">Multi-Stage Processing Framework</h3>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 max-w-4xl mx-auto">
                     <div className="text-center bg-white/50 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-blue-100/50">
@@ -384,8 +384,9 @@ export default function Dashboard() {
                         <span className="h-6 w-6 rounded-full bg-gradient-to-br from-blue-600 to-blue-700 text-white flex items-center justify-center text-xs font-bold shadow-sm">
                           1
                         </span>
+                        Legislative Parsing
                       </h4>
-                      <p className="text-sm text-foreground/60">Extract key elements and identify affected sectors</p>
+                      <p className="text-sm text-foreground/60">Parse statutory text & extract sector-specific provisions</p>
                     </div>
 
                     <div className="text-center bg-white/50 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-green-100/50">
@@ -398,9 +399,9 @@ export default function Dashboard() {
                         <span className="h-6 w-6 rounded-full bg-gradient-to-br from-green-600 to-green-700 text-white flex items-center justify-center text-xs font-bold shadow-sm">
                           2
                         </span>
-                        Financial Context
+                        Data Enrichment
                       </h4>
-                      <p className="text-sm text-foreground/60">Cross-reference with SEC filings and corporate data</p>
+                      <p className="text-sm text-foreground/60">Merge legislative dataset with SEC disclosure filings and corporate fundamentals</p>
                     </div>
 
                     <div className="text-center bg-white/50 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-purple-100/50">
@@ -413,10 +414,10 @@ export default function Dashboard() {
                         <span className="h-6 w-6 rounded-full bg-gradient-to-br from-purple-600 to-purple-700 text-white flex items-center justify-center text-xs font-bold shadow-sm">
                           3
                         </span>
-                        Investment Insights
+                        Portfolio Impact Scoring
                       </h4>
                       <p className="text-sm text-foreground/60">
-                        Generate portfolio recommendations and risk assessment
+                        Calculate position-level exposure vectors and risk indicators
                       </p>
                     </div>
                   </div>
@@ -430,16 +431,20 @@ export default function Dashboard() {
                   <input type="file" accept=".html,.txt,.xml,.pdf" onChange={handleFileUpload} className="hidden" id="file-input" />
                   <label htmlFor="file-input" className="cursor-pointer block">
                     <div className="flex flex-col items-center gap-3">
-                      <div className="h-14 w-14 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center shadow-md">
-                        <Upload className="h-7 w-7 text-blue-600" />
-                      </div>
-                      <p className="text-foreground font-medium">
-                        Drop your document here or{" "}
-                        <span className="text-blue-600 hover:text-blue-700 font-semibold">browse</span>
-                      </p>
-                      <p className="text-xs text-foreground/50">
-                        Supported formats: HTML, TXT, XML, PDF
-                      </p>
+                      {!uploadedFile && (
+                        <>
+                          <div className="h-14 w-14 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center shadow-md">
+                            <Upload className="h-7 w-7 text-blue-600" />
+                          </div>
+                          <p className="text-foreground font-medium">
+                            Drag legislative file or{" "}
+                            <span className="text-blue-600 hover:text-blue-700 font-semibold">browse</span>
+                          </p>
+                          <p className="text-xs text-foreground/50">
+                            Accepted formats: HTML, TXT, XML, PDF (congressional/regulatory sources)
+                          </p>
+                        </>
+                      )}
                       {uploadedFile && (
                         <div className="flex items-center gap-3 mt-2 px-4 py-2 bg-green-50 rounded-lg">
                           <p className="text-sm text-green-600 font-medium">{uploadedFile.name}</p>
@@ -467,7 +472,7 @@ export default function Dashboard() {
                     disabled={!uploadedFile}
                     className="px-10 py-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-400 text-white font-semibold rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
                   >
-                    Start Analysis
+                    Run Analysis Pipeline
                   </Button>
                 </div>
               </div>
