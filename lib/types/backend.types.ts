@@ -67,3 +67,35 @@ export interface StreamingAnalysisUpdate {
   stepStatus: "in-progress" | "completed"
   stepData?: any
 }
+
+/**
+ * Types pour la fonctionnalité PDF Export (Decision Analysis)
+ */
+export interface CompanyDecision {
+  Ticker: string
+  PredictedPosition: number
+  reasoning: string
+  confidence_level: number
+  sector?: string
+  market_cap_basic?: number
+  change?: number
+}
+
+export interface AISynthesis {
+  summary: string
+  recommendations: string
+  metadata: {
+    model_used: string
+    prompt_mode?: string
+    language?: string
+    execution_time_seconds?: number
+    analysis_date?: string
+    analyst?: string
+    document_version?: string
+  }
+}
+
+export interface LookupResponse {
+  companies: CompanyDecision[]
+  ai_synthesis: AISynthesis
+}

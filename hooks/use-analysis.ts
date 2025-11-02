@@ -270,13 +270,17 @@ export function useAnalysis() {
           console.error('Polling error:', error)
           const errorMessage = error instanceof Error ? error.message : 'Unknown error'
           
-          // Provide more helpful error messages
-          let userMessage = errorMessage
-          if (errorMessage.includes('UnsupportedDocumentException')) {
-            userMessage = '❌ Format PDF non supporté pour l\'instant. Le backend doit être mis à jour pour utiliser StartDocumentTextDetection au lieu de DetectDocumentText.\n\nFormats supportés actuellement: .txt, .html, .xml'
+          // If job not found (404), it might be a backend issue
+          if (errorMessage.includes('Job not found')) {
+            console.warn('[Analysis] Backend job system may not be ready. Contact backend engineer.')
+            console.warn('[Analysis] The /api/status endpoint is returning 404 for job_id:', jobId)
+            alert(`⚠️ Backend Error: Job ${jobId} not found\n\nThe backend may need to:\n1. Properly store jobs when /api/analyse is called\n2. Make sure /api/status/{job_id} can retrieve the job\n3. Check that jobs aren't expiring immediately\n\nContact your backend engineer to verify the job system is working.`)
+          } else if (errorMessage.includes('UnsupportedDocumentException')) {
+            alert('❌ Format PDF non supporté pour l\'instant. Le backend doit être mis à jour pour utiliser StartDocumentTextDetection au lieu de DetectDocumentText.\n\nFormats supportés actuellement: .txt, .html, .xml')
+          } else {
+            alert(`Échec de l'analyse:\n${errorMessage}`)
           }
           
-          alert(`Échec de l'analyse:\n${userMessage}`)
           setIsAnalyzing(false)
         })
         

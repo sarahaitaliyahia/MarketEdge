@@ -6,6 +6,7 @@ import { User, Plus, Upload, FileText, TrendingUp, PieChart, X, ChevronDown, Che
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
 import { useAnalysis } from "@/hooks/use-analysis"
+import { useLookupData } from "@/hooks/use-lookup"
 import { DotLottieReact } from '@lottiefiles/dotlottie-react'
 import GeographicImpact from "@/components/analysis/GeographicImpact"
 import SectorImpact from "@/components/analysis/SectorImpact"
@@ -13,6 +14,7 @@ import KeyFindingsSection from "@/components/analysis/KeyFindingsSection"
 import PotentialRisks from "@/components/analysis/PotentialRisks"
 import AnalystCommentary from "@/components/analysis/AnalystCommentary"
 import AnalysisChatbox from "@/components/analysis/AnalysisChatbox"
+import { PDFExportButton } from "@/components/analysis/PDFExportButton"
 
 interface AnalysisItem {
   id: string
@@ -53,7 +55,7 @@ export default function Dashboard() {
       color: "red",
     },
   ])
-  const [isEnhancedOpen, setIsEnhancedOpen] = useState(true)
+  const [isEnhancedOpen, setIsEnhancedOpen] = useState(false)
   const [isMarketImpactOpen, setIsMarketImpactOpen] = useState(false)
   const [isRiskLevelOpen, setIsRiskLevelOpen] = useState(false)
   const [isChatOpen, setIsChatOpen] = useState(false)
@@ -68,6 +70,9 @@ export default function Dashboard() {
     handleStartAnalysis: hookHandleStartAnalysis,
     resetAnalysis,
   } = useAnalysis()
+
+  // Use lookup data hook for PDF export (mock data)
+  const { data: lookupData } = useLookupData()
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -219,7 +224,7 @@ export default function Dashboard() {
                 <X className="h-4 w-4" /> New Analysis
               </button>
 
-              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-8 mb-8 border border-blue-200 shadow-xl animate-in fade-in slide-in-from-top-4 duration-500">
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-8 mb-8 border border-blue-200 shadow-xl">
                 <div className="mb-4">
                   <h2 className="text-3xl font-bold text-foreground">{analysisResults.title}</h2>
                 </div>
@@ -228,7 +233,7 @@ export default function Dashboard() {
 
               <div className="space-y-6 xl:space-y-8">
                 {/* Key Provisions - Affiche les données enrichies */}
-                <div className={`bg-white p-6 rounded-lg border border-border shadow-sm ${enhancedData ? 'animate-in fade-in slide-in-from-bottom-4 duration-500 delay-700' : ''}`}>
+                <div className="bg-white p-6 rounded-lg border border-border shadow-sm">
                   <div 
                     className="flex items-center gap-4 cursor-pointer hover:bg-gray-50 -m-6 p-6 rounded-lg transition-colors"
                     onClick={() => setIsEnhancedOpen(!isEnhancedOpen)}
@@ -239,16 +244,18 @@ export default function Dashboard() {
                     <div className="flex-1">
                       <h4 className="font-semibold text-foreground mb-1">Key Findings & Analysis</h4>
                       <p className="text-sm text-foreground/60">
-                        {enhancedData ? 'Comprehensive insights from AI analysis' : 'Loading enhanced data...'}
+                        {enhancedData ? 'Comprehensive insights from AI analysis' : 'Loading...'}
                       </p>
                     </div>
-                    <div className="text-gray-400">
-                      {isEnhancedOpen ? (
-                        <ChevronUp className="h-5 w-5" />
-                      ) : (
-                        <ChevronDown className="h-5 w-5" />
-                      )}
-                    </div>
+                    {enhancedData && (
+                      <div className="text-gray-400">
+                        {isEnhancedOpen ? (
+                          <ChevronUp className="h-5 w-5" />
+                        ) : (
+                          <ChevronDown className="h-5 w-5" />
+                        )}
+                      </div>
+                    )}
                   </div>
                   
                   <div 
@@ -270,7 +277,7 @@ export default function Dashboard() {
                 </div>
 
                 {/* Market Impact */}
-                <div className={`bg-white p-6 rounded-lg border border-border shadow-sm ${enhancedData ? 'animate-in fade-in slide-in-from-bottom-4 duration-500 delay-1000' : ''}`}>
+                <div className="bg-white p-6 rounded-lg border border-border shadow-sm">
                   <div 
                     className="flex items-center gap-4 cursor-pointer hover:bg-gray-50 -m-6 p-6 rounded-lg transition-colors"
                     onClick={() => setIsMarketImpactOpen(!isMarketImpactOpen)}
@@ -281,16 +288,18 @@ export default function Dashboard() {
                     <div className="flex-1">
                       <h4 className="font-semibold text-foreground mb-1">Market Impact Analysis</h4>
                       <p className="text-sm text-foreground/60">
-                        {enhancedData ? 'Sector impacts, risks, and detailed country analysis' : 'Loading data...'}
+                        {enhancedData ? 'Sector impacts, risks, and detailed country analysis' : 'Loading...'}
                       </p>
                     </div>
-                    <div className="text-gray-400">
-                      {isMarketImpactOpen ? (
-                        <ChevronUp className="h-5 w-5" />
-                      ) : (
-                        <ChevronDown className="h-5 w-5" />
-                      )}
-                    </div>
+                    {enhancedData && (
+                      <div className="text-gray-400">
+                        {isMarketImpactOpen ? (
+                          <ChevronUp className="h-5 w-5" />
+                        ) : (
+                          <ChevronDown className="h-5 w-5" />
+                        )}
+                      </div>
+                    )}
                   </div>
                   
                   <div 
@@ -328,7 +337,7 @@ export default function Dashboard() {
                 </div>
 
                 {/* Risk Assessment */}
-                <div className={`bg-white p-6 rounded-lg border border-border shadow-sm ${enhancedData ? 'animate-in fade-in slide-in-from-bottom-4 duration-500 delay-1300' : ''}`}>
+                <div className="bg-white p-6 rounded-lg border border-border shadow-sm">
                   <div 
                     className="flex items-center gap-4 cursor-pointer hover:bg-gray-50 -m-6 p-6 rounded-lg transition-colors"
                     onClick={() => setIsRiskLevelOpen(!isRiskLevelOpen)}
@@ -342,13 +351,15 @@ export default function Dashboard() {
                         Overall risk level and key risk factors
                       </p>
                     </div>
-                    <div className="text-gray-400">
-                      {isRiskLevelOpen ? (
-                        <ChevronUp className="h-5 w-5" />
-                      ) : (
-                        <ChevronDown className="h-5 w-5" />
-                      )}
-                    </div>
+                    {enhancedData && (
+                      <div className="text-gray-400">
+                        {isRiskLevelOpen ? (
+                          <ChevronUp className="h-5 w-5" />
+                        ) : (
+                          <ChevronDown className="h-5 w-5" />
+                        )}
+                      </div>
+                    )}
                   </div>
                   
                   <div 
@@ -363,6 +374,16 @@ export default function Dashboard() {
                     </div>
                   </div>
                 </div>
+
+                {/* PDF Export Button */}
+                {lookupData && (
+                  <div className="mt-6 flex justify-center">
+                    <PDFExportButton 
+                      data={lookupData} 
+                      lawTitle={analysisResults?.title}
+                    />
+                  </div>
+                )}
               </div>
             </div>
           ) : (
@@ -448,37 +469,44 @@ export default function Dashboard() {
                   className="border-2 border-dashed border-blue-200 rounded-2xl p-8 text-center hover:border-blue-400 hover:bg-blue-50/30 transition-all duration-300 max-w-xl mx-auto bg-white/50 backdrop-blur-sm shadow-sm"
                 >
                   <input type="file" accept=".html,.txt,.xml,.pdf" onChange={handleFileUpload} className="hidden" id="file-input" />
-                  <label htmlFor="file-input" className="cursor-pointer block">
-                    <div className="flex flex-col items-center gap-3">
-                      <div className="h-14 w-14 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center shadow-md">
-                        <Upload className="h-7 w-7 text-blue-600" />
+                  
+                  {uploadedFile ? (
+                    /* File uploaded - show only file name with remove button */
+                    <div className="flex items-center justify-center gap-3 px-4 py-2">
+                      <div className="flex items-center gap-3 px-4 py-3 bg-green-50 rounded-lg">
+                        <FileText className="h-5 w-5 text-green-600" />
+                        <p className="text-sm text-green-600 font-medium">{uploadedFile.name}</p>
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault()
+                            setUploadedFile(null)
+                            const input = document.getElementById('file-input') as HTMLInputElement
+                            if (input) input.value = ''
+                          }}
+                          className="text-red-500 hover:text-red-700 transition-colors"
+                          title="Remove file"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
                       </div>
-                      <p className="text-foreground font-medium">
-                        Drop your document here or{" "}
-                        <span className="text-blue-600 hover:text-blue-700 font-semibold">browse</span>
-                      </p>
-                      <p className="text-xs text-foreground/50">
-                        Supported formats: HTML, TXT, XML, PDF
-                      </p>
-                      {uploadedFile && (
-                        <div className="flex items-center gap-3 mt-2 px-4 py-2 bg-green-50 rounded-lg">
-                          <p className="text-sm text-green-600 font-medium">{uploadedFile.name}</p>
-                          <button
-                            onClick={(e) => {
-                              e.preventDefault()
-                              setUploadedFile(null)
-                              const input = document.getElementById('file-input') as HTMLInputElement
-                              if (input) input.value = ''
-                            }}
-                            className="text-red-500 hover:text-red-700 transition-colors"
-                            title="Remove file"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
-                        </div>
-                      )}
                     </div>
-                  </label>
+                  ) : (
+                    /* No file - show drop zone */
+                    <label htmlFor="file-input" className="cursor-pointer block">
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="h-14 w-14 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center shadow-md">
+                          <Upload className="h-7 w-7 text-blue-600" />
+                        </div>
+                        <p className="text-foreground font-medium">
+                          Drop your document here or{" "}
+                          <span className="text-blue-600 hover:text-blue-700 font-semibold">browse</span>
+                        </p>
+                        <p className="text-xs text-foreground/50">
+                          Supported formats: HTML, TXT, XML, PDF
+                        </p>
+                      </div>
+                    </label>
+                  )}
                 </div>
 
                 <div className="flex justify-center mt-6 mb-8">

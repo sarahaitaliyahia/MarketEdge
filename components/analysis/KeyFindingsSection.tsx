@@ -91,8 +91,8 @@ export default function KeyFindingsSection({
       
       {/* Confidence Metrics */}
       {confidenceMetrics && (
-        <div className="bg-gray-50 p-4 rounded-lg">
-          <h5 className="font-semibold text-foreground mb-3">Confidence Metrics</h5>
+        <div className="space-y-3">
+          <h5 className="font-semibold text-foreground">Confidence Metrics</h5>
           <div className="grid grid-cols-2 gap-3">
             {confidenceMetrics.model_confidence !== undefined && (
               <div>
