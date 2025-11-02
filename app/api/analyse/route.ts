@@ -4,7 +4,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     
-    console.log('Proxy: Receiving request...')
+    console.log('Receiving request...')
     
     // Appeler l'API AWS
     const response = await fetch(
