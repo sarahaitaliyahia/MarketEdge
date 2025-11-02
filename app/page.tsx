@@ -6,6 +6,7 @@ import { User, Plus, Upload, FileText, TrendingUp, PieChart, X, ChevronDown, Che
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
 import { useAnalysis } from "@/hooks/use-analysis"
+import { useLookupData } from "@/hooks/use-lookup"
 import { DotLottieReact } from '@lottiefiles/dotlottie-react'
 import GeographicImpact from "@/components/analysis/GeographicImpact"
 import SectorImpact from "@/components/analysis/SectorImpact"
@@ -13,6 +14,8 @@ import ImpactedCountries from "@/components/analysis/ImpactedCountries"
 import KeyFindingsSection from "@/components/analysis/KeyFindingsSection"
 import PotentialRisks from "@/components/analysis/PotentialRisks"
 import AnalystCommentary from "@/components/analysis/AnalystCommentary"
+import CompanyHeatMap from "@/components/analysis/CompanyHeatMap"
+import { PDFExportButton } from "@/components/analysis/PDFExportButton"
 
 interface AnalysisItem {
   id: string
@@ -67,6 +70,9 @@ export default function Dashboard() {
     handleStartAnalysis: hookHandleStartAnalysis,
     resetAnalysis,
   } = useAnalysis()
+
+  // Use the lookup hook for heat map data
+  const { data: lookupData, isLoading: isLoadingLookup } = useLookupData()
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -317,6 +323,23 @@ export default function Dashboard() {
                         {enhancedData.law_analysis_output.impact?.countries_affected && (
                           <ImpactedCountries countries={enhancedData.law_analysis_output.impact.countries_affected} />
                         )}
+                        
+                        {/* Company Heat Map */}
+                        {lookupData?.companies && lookupData.companies.length > 0 && (
+                          <div className="mt-6">
+                            <CompanyHeatMap companies={lookupData.companies} />
+                          </div>
+                        )}
+                        
+                        {/* PDF Export Button */}
+                        {lookupData && (
+                          <div className="mt-6 flex justify-center">
+                            <PDFExportButton 
+                              data={lookupData} 
+                              lawTitle={analysisResults?.title}
+                            />
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -361,7 +384,6 @@ export default function Dashboard() {
                         <span className="h-6 w-6 rounded-full bg-gradient-to-br from-blue-600 to-blue-700 text-white flex items-center justify-center text-xs font-bold shadow-sm">
                           1
                         </span>
-                        Law Summarization
                       </h4>
                       <p className="text-sm text-foreground/60">Extract key elements and identify affected sectors</p>
                     </div>
