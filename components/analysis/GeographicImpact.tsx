@@ -10,10 +10,9 @@ interface GeographicImpactProps {
 
 export default function GeographicImpact({ countries }: GeographicImpactProps) {
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300">
-      <p className="text-sm font-semibold text-foreground mb-3">Geographic Impact:</p>
-      <div className="flex flex-wrap gap-2">
+    <div className="flex flex-wrap gap-2">
         {[...countries]
+          .filter((country) => country.impact !== 0)
           .sort((a, b) => {
             // Positifs d'abord (décroissant), puis négatifs (croissant = moins négatif d'abord)
             if (a.impact >= 0 && b.impact >= 0) return b.impact - a.impact;
@@ -32,7 +31,6 @@ export default function GeographicImpact({ countries }: GeographicImpactProps) {
               {country.country} {country.impact > 0 ? '↑' : country.impact < 0 ? '↓' : '→'} {Math.abs(country.impact * 100).toFixed(0)}%
             </span>
           ))}
-      </div>
     </div>
   )
 }

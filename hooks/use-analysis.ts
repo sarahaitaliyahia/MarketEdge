@@ -8,6 +8,7 @@ interface AnalysisResults {
 }
 
 interface EnhancedData {
+  session_id?: string
   law_analysis_output?: {
     law_metadata?: {
       summary?: string
@@ -110,17 +111,45 @@ export function useAnalysis() {
       const documentType = getDocumentType(uploadedFile)
       let documentContent: string
 
+      let requestBody: any = {
+        document_type: documentType,
+      }
+
       if (documentType === 'pdf') {
-        // For PDFs, encode as base64
+        // For PDFs, upload to S3 first, then send S3 reference
+        console.log('PDF detected, uploading to S3...')
+        
         const arrayBuffer = await uploadedFile.arrayBuffer()
         const bytes = new Uint8Array(arrayBuffer)
-        const binary = Array.from(bytes, byte => String.fromCharCode(byte)).join('')
-        documentContent = btoa(binary)
+        
+        // Upload to S3 via a new endpoint
+        const uploadResponse = await fetch('/api/upload-s3', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            filename: uploadedFile.name,
+            content: Array.from(bytes),
+          }),
+        })
+        
+        if (!uploadResponse.ok) {
+          const errorText = await uploadResponse.text()
+          throw new Error(`S3 upload failed: ${uploadResponse.status} ${errorText}`)
+        }
+        
+        const uploadData = await uploadResponse.json()
+        console.log('S3 upload successful:', uploadData)
+        
+        // Send S3 reference instead of file content
+        requestBody.s3_bucket = uploadData.bucket
+        requestBody.s3_key = uploadData.key
       } else {
         // For text-based files, read as text
         const text = await uploadedFile.text()
         // Basic cleaning: remove script and style tags
-        documentContent = text
+        let documentContent = text
           .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
           .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
         
@@ -129,6 +158,8 @@ export function useAnalysis() {
         if (documentContent.length > maxLength) {
           documentContent = documentContent.substring(0, maxLength)
         }
+        
+        requestBody.document_content = documentContent
       }
 
       // Call the analyse endpoint (returns job_id)
@@ -137,10 +168,7 @@ export function useAnalysis() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          document_type: documentType,
-          document_content: documentContent,
-        }),
+        body: JSON.stringify(requestBody),
       })
 
       if (!analyseResponse.ok) {
@@ -192,15 +220,63 @@ export function useAnalysis() {
             } : null)
           }, 300)
           
-          // STEP 3: Load enhanced data (Key Findings, Risks, etc.)
-          setTimeout(() => {
+          // STEP 3: Load enhanced data and get analysis_id from /decision
+          setTimeout(async () => {
             if (lawOutput) {
-              setEnhancedData({ law_analysis_output: lawOutput })
+              let sessionId = result.session_id || jobId
+              
+              // Call /decision endpoint to get the real analysis_id
+              try {
+                console.log('[Analysis] Calling /decision with analysis data')
+                const decisionResponse = await fetch('/api/decision', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    sp500_analysis: analysisData
+                  }),
+                })
+                
+                if (decisionResponse.ok) {
+                  const decisionData = await decisionResponse.json()
+                  if (decisionData.analysis_id) {
+                    sessionId = decisionData.analysis_id
+                    console.log('[Analysis] Got analysis_id from /decision:', sessionId)
+                  } else {
+                    console.warn('[Analysis] /decision response missing analysis_id, using jobId')
+                  }
+                } else {
+                  const errorText = await decisionResponse.text()
+                  console.error('[Analysis] /decision failed:', decisionResponse.status, errorText)
+                  console.warn('[Analysis] Using jobId as fallback')
+                }
+              } catch (error) {
+                console.error('[Analysis] Error calling /decision:', error)
+                console.log('[Analysis] Using jobId as fallback')
+              }
+              
+              console.log('[Analysis] Final session ID for chat:', sessionId)
+              
+              const enhancedDataWithSession = { 
+                session_id: sessionId,
+                law_analysis_output: lawOutput 
+              }
+              
+              setEnhancedData(enhancedDataWithSession)
             }
           }, 600)
         }).catch(error => {
           console.error('Polling error:', error)
-          alert(`Analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+          
+          // Provide more helpful error messages
+          let userMessage = errorMessage
+          if (errorMessage.includes('UnsupportedDocumentException')) {
+            userMessage = '❌ Format PDF non supporté pour l\'instant. Le backend doit être mis à jour pour utiliser StartDocumentTextDetection au lieu de DetectDocumentText.\n\nFormats supportés actuellement: .txt, .html, .xml'
+          }
+          
+          alert(`Échec de l'analyse:\n${userMessage}`)
           setIsAnalyzing(false)
         })
         

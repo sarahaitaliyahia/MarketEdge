@@ -1,3 +1,7 @@
+'use client'
+
+import { useState } from 'react'
+
 interface ConfidenceMetrics {
   model_confidence?: number
   data_completeness?: number
@@ -18,6 +22,8 @@ export default function KeyFindingsSection({
   macroTags,
   microTags,
 }: KeyFindingsSectionProps) {
+  const [showAllMicroTags, setShowAllMicroTags] = useState(false)
+  
   return (
     <div className="space-y-6">
       {/* Key Findings */}
@@ -37,6 +43,49 @@ export default function KeyFindingsSection({
               </li>
             ))}
           </ul>
+        </div>
+      )}
+      
+      {/* Tags Section */}
+      {((macroTags && macroTags.length > 0) || (microTags && microTags.length > 0)) && (
+        <div className="space-y-4">
+          <h5 className="font-semibold text-foreground text-lg">Tags</h5>
+          
+          {/* Macro Tags */}
+          {macroTags && macroTags.length > 0 && (
+            <div className="space-y-2">
+              <h6 className="font-medium text-foreground text-sm">Macro Tags</h6>
+              <div className="flex flex-wrap gap-2">
+                {macroTags.map((tag: string, i: number) => (
+                  <span key={i} className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-medium">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {/* Micro Tags */}
+          {microTags && microTags.length > 0 && (
+            <div className="space-y-2">
+              <h6 className="font-medium text-foreground text-sm">Micro Tags</h6>
+              <div className="flex flex-wrap gap-2">
+                {(showAllMicroTags ? microTags : microTags.slice(0, 10)).map((tag: string, i: number) => (
+                  <span key={i} className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-xs font-medium">
+                    {tag}
+                  </span>
+                ))}
+                {microTags.length > 10 && (
+                  <button
+                    onClick={() => setShowAllMicroTags(!showAllMicroTags)}
+                    className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-xs font-medium hover:bg-gray-200 transition-colors cursor-pointer"
+                  >
+                    {showAllMicroTags ? 'Show less' : `+${microTags.length - 10} more`}
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
       
@@ -108,39 +157,6 @@ export default function KeyFindingsSection({
                   </span>
                 </div>
               </div>
-            )}
-          </div>
-        </div>
-      )}
-      
-      {/* Macro Tags */}
-      {macroTags && macroTags.length > 0 && (
-        <div className="space-y-3">
-          <h5 className="font-semibold text-foreground">Macro Tags</h5>
-          <div className="flex flex-wrap gap-2">
-            {macroTags.map((tag: string, i: number) => (
-              <span key={i} className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-medium">
-                {tag}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-      
-      {/* Micro Tags */}
-      {microTags && microTags.length > 0 && (
-        <div className="space-y-3">
-          <h5 className="font-semibold text-foreground">Micro Tags</h5>
-          <div className="flex flex-wrap gap-2">
-            {microTags.slice(0, 10).map((tag: string, i: number) => (
-              <span key={i} className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-xs font-medium">
-                {tag}
-              </span>
-            ))}
-            {microTags.length > 10 && (
-              <span className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-xs font-medium">
-                +{microTags.length - 10} more
-              </span>
             )}
           </div>
         </div>
