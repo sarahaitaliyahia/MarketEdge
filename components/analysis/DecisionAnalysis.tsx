@@ -127,58 +127,96 @@ export default function DecisionAnalysis({ decisionData, companies, confidenceMe
         </div>
       )}
 
-      {/* Company Position Heat Map */}
+      {/* Company Position Heat Map - TradingView Style */}
       {companies && companies.length > 0 && (
         <div className="space-y-4">
           <div className="flex items-center justify-between mb-2">
-            <h5 className="font-semibold text-foreground">Company Position Heat Map</h5>
-          </div>
-
-          {/* Heatmap Grid */}
-          <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
-            <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
-              {[...companies].sort((a, b) => b.position - a.position).map((company) => (
-                <button
-                  key={company.ticker}
-                  type="button"
-                  onClick={() => setSelectedCompany(company)}
-                  className="relative group cursor-pointer rounded-lg p-3 transition-all duration-200 hover:scale-110 hover:z-10 hover:shadow-xl"
-                  style={{ backgroundColor: getColor(company.position) }}
-                >
-                  <div className="flex flex-col items-center justify-center text-center">
-                    <div className="font-bold text-xs text-white drop-shadow-md">
-                      {company.ticker}
-                    </div>
-                    <div className="text-white/90 text-[10px] font-semibold mt-1">
-                      {(company.position * 100).toFixed(0)}%
-                    </div>
-                  </div>
-
-                  {/* Tooltip */}
-                  <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block bg-gray-900 text-white text-xs rounded-lg px-3 py-2 whitespace-nowrap shadow-xl z-20 pointer-events-none">
-                    <div className="font-semibold">{company.ticker}</div>
-                    <div className="text-white/90">Position: {(company.position * 100).toFixed(1)}%</div>
-                    <div className="text-white/90">Confidence: {(company.confidence_level * 100).toFixed(0)}%</div>
-                    <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-l-4 border-l-transparent border-r-4 border-r-transparent border-t-4 border-t-gray-900"></div>
-                  </div>
-                </button>
-              ))}
+            <h5 className="font-semibold text-foreground">S&P 500 Position Heatmap</h5>
+            <div className="text-xs text-foreground/60">
+              {companies.length} companies analyzed
             </div>
           </div>
 
-          {/* Color Legend */}
-          <div className="flex items-center justify-center gap-2 text-xs">
-            <span className="text-foreground/60">Bearish</span>
-            <div className="flex gap-1">
-              <div className="w-6 h-4 rounded" style={{ backgroundColor: "#dc2626" }}></div>
-              <div className="w-6 h-4 rounded" style={{ backgroundColor: "#f87171" }}></div>
-              <div className="w-6 h-4 rounded" style={{ backgroundColor: "#fb923c" }}></div>
-              <div className="w-6 h-4 rounded" style={{ backgroundColor: "#fde047" }}></div>
-              <div className="w-6 h-4 rounded" style={{ backgroundColor: "#86efac" }}></div>
-              <div className="w-6 h-4 rounded" style={{ backgroundColor: "#22c55e" }}></div>
-              <div className="w-6 h-4 rounded" style={{ backgroundColor: "#16a34a" }}></div>
+          {/* TradingView-style Heatmap Grid */}
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-lg p-1 shadow-xl">
+            <div className="grid gap-[1px]" style={{ 
+              gridTemplateColumns: `repeat(auto-fit, minmax(80px, 1fr))`,
+            }}>
+              {[...companies].sort((a, b) => b.position - a.position).map((company) => {
+                const positionPercent = (company.position * 100).toFixed(1)
+                const isPositive = company.position >= 0
+                
+                return (
+                  <button
+                    key={company.ticker}
+                    type="button"
+                    onClick={() => setSelectedCompany(company)}
+                    className="relative group cursor-pointer p-0 overflow-hidden transition-all duration-200 hover:scale-105 hover:z-10 hover:shadow-2xl aspect-square"
+                    style={{ backgroundColor: getColor(company.position) }}
+                  >
+                    {/* Content */}
+                    <div className="absolute inset-0 flex flex-col items-center justify-center p-2">
+                      {/* Ticker */}
+                      <div className="font-bold text-sm text-white drop-shadow-lg mb-1">
+                        {company.ticker}
+                      </div>
+                      
+                      {/* Position with arrow */}
+                      <div className="flex items-center gap-1">
+                        <span className="text-white/90 text-xs font-semibold">
+                          {isPositive ? '▲' : '▼'}
+                        </span>
+                        <span className="text-white/90 text-xs font-bold">
+                          {isPositive ? '+' : ''}{positionPercent}%
+                        </span>
+                      </div>
+
+                      {/* Confidence indicator - small bar at bottom */}
+                      <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/30">
+                        <div 
+                          className="h-full bg-white/50"
+                          style={{ width: `${company.confidence_level * 100}%` }}
+                        ></div>
+                      </div>
+                    </div>
+
+                    {/* Hover overlay */}
+                    <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors"></div>
+
+                    {/* Tooltip */}
+                    <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block bg-gray-900 text-white text-xs rounded-lg px-3 py-2 whitespace-nowrap shadow-2xl z-20 pointer-events-none border border-gray-700">
+                      <div className="font-bold text-sm mb-1">{company.ticker}</div>
+                      <div className="text-white/90">Position: {isPositive ? '+' : ''}{positionPercent}%</div>
+                      <div className="text-white/90">Confidence: {(company.confidence_level * 100).toFixed(0)}%</div>
+                      <div className="text-white/70 text-[10px] mt-1">Click for details</div>
+                      <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-l-4 border-l-transparent border-r-4 border-r-transparent border-t-4 border-t-gray-900"></div>
+                    </div>
+                  </button>
+                )
+              })}
             </div>
-            <span className="text-foreground/60">Bullish</span>
+          </div>
+
+          {/* Color Legend - TradingView style */}
+          <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-foreground/70">Bearish</span>
+                <div className="flex gap-0.5">
+                  <div className="w-8 h-5 rounded-sm border border-gray-300" style={{ backgroundColor: "#dc2626" }}></div>
+                  <div className="w-8 h-5 rounded-sm border border-gray-300" style={{ backgroundColor: "#f87171" }}></div>
+                  <div className="w-8 h-5 rounded-sm border border-gray-300" style={{ backgroundColor: "#fb923c" }}></div>
+                  <div className="w-8 h-5 rounded-sm border border-gray-300" style={{ backgroundColor: "#fde047" }}></div>
+                  <div className="w-8 h-5 rounded-sm border border-gray-300" style={{ backgroundColor: "#86efac" }}></div>
+                  <div className="w-8 h-5 rounded-sm border border-gray-300" style={{ backgroundColor: "#22c55e" }}></div>
+                  <div className="w-8 h-5 rounded-sm border border-gray-300" style={{ backgroundColor: "#16a34a" }}></div>
+                </div>
+                <span className="text-xs font-medium text-foreground/70">Bullish</span>
+              </div>
+              <div className="text-[10px] text-foreground/50">
+                Bottom bar = Confidence level
+              </div>
+            </div>
           </div>
 
           {/* Company Detail Modal */}
