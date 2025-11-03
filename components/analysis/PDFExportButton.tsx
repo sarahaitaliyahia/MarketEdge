@@ -10,12 +10,14 @@ interface PDFExportButtonProps {
   readonly data: LookupResponse
   readonly lawTitle?: string
   readonly className?: string
+  readonly disabled?: boolean
 }
 
-export function PDFExportButton({ data, lawTitle, className }: PDFExportButtonProps) {
+export function PDFExportButton({ data, lawTitle, className, disabled }: PDFExportButtonProps) {
   const [isGenerating, setIsGenerating] = useState(false)
 
   const handleDownload = () => {
+    if (disabled) return
     setIsGenerating(true)
     try {
       generateDecisionPDF(data, lawTitle)
@@ -29,7 +31,7 @@ export function PDFExportButton({ data, lawTitle, className }: PDFExportButtonPr
   return (
     <Button
       onClick={handleDownload}
-      disabled={isGenerating}
+      disabled={disabled || isGenerating}
       className={className}
       variant="default"
     >

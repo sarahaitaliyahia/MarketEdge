@@ -81,31 +81,116 @@ export function generateDecisionPDF(data: LookupResponse, lawTitle?: string) {
   yPos += 6
   doc.text(`Generated: ${new Date().toLocaleString()}`, 15, yPos)
   yPos += 6
-  doc.text(`Model: ${data.ai_synthesis.metadata.model_used}`, 15, yPos)
-  yPos += 12
+  if (data.ai_synthesis?.metadata?.model_used) {
+    doc.text(`Model: ${data.ai_synthesis.metadata.model_used}`, 15, yPos)
+    yPos += 6
+  }
+  yPos += 6
 
-  // ===== EXECUTIVE SUMMARY =====
-  checkPageBreak(30)
-  doc.setFillColor(236, 240, 241)
-  doc.rect(15, yPos - 5, pageWidth - 30, 10, "F")
-  doc.setFontSize(14)
-  doc.setFont("helvetica", "bold")
-  doc.setTextColor(41, 128, 185)
-  doc.text("Executive Summary", 20, yPos)
-  yPos += 12
+  // Filter out success messages from summary
+  const strategicSummary = data.ai_synthesis?.summary
+    ?.split('\n')
+    .filter(line => !line.includes('générée avec succès') && !line.includes('generated successfully'))
+    .join('\n')
+    .trim()
 
-  doc.setFont("helvetica", "normal")
-  doc.setFontSize(10)
-  doc.setTextColor(0, 0, 0)
-  const summaryHeight = addWrappedText(
-    data.ai_synthesis.summary,
-    15,
-    yPos,
-    pageWidth - 30,
-    10,
-    [52, 73, 94]
-  )
-  yPos += summaryHeight + 10
+  // Get recommendations (filter the header line)
+  const recommendations = data.ai_synthesis?.recommendations
+    ?.split('\n')
+    .filter(line => !line.includes("Résumé et interprétation des résultats d'analyse du S&P500"))
+    .join('\n')
+    .trim()
+
+  // ===== STRATEGIC SUMMARY =====
+    // Si le summary est vide, utiliser le début des recommendations
+    const strategicText = strategicSummary && strategicSummary.length > 10
+      ? strategicSummary
+      : (recommendations ? recommendations.split('\n\n')[0] : '')
+
+    if (strategicText) {
+      checkPageBreak(30)
+      doc.setFillColor(236, 240, 241)
+      doc.rect(15, yPos - 5, pageWidth - 30, 10, "F")
+      doc.setFontSize(14)
+      doc.setFont("helvetica", "bold")
+      doc.setTextColor(147, 51, 234) // Purple-600
+      doc.text("Strategic Summary", 20, yPos)
+      yPos += 12
+
+      doc.setFont("helvetica", "normal")
+      doc.setFontSize(9)
+      doc.setTextColor(0, 0, 0)
+
+      // Purple left border for full summary
+      doc.setFillColor(147, 51, 234) // Purple-600
+      doc.rect(15, yPos - 3, 3, 20, "F")
+    
+      // Light purple background
+      doc.setFillColor(250, 245, 255) // Purple-50
+      doc.rect(19, yPos - 3, pageWidth - 37, 20, "F")
+
+      // Full summary text
+      const summaryHeight = addWrappedText(
+        strategicText,
+        22,
+        yPos,
+        pageWidth - 42,
+        9,
+        [107, 114, 128] // Gray-500
+      )
+    
+      yPos += summaryHeight + 15
+    }
+
+  // ===== INVESTMENT RECOMMENDATIONS =====
+  if (recommendations) {
+    checkPageBreak(30)
+    doc.setFillColor(236, 240, 241)
+    doc.rect(15, yPos - 5, pageWidth - 30, 10, "F")
+    doc.setFontSize(14)
+    doc.setFont("helvetica", "bold")
+    doc.setTextColor(41, 128, 185)
+    doc.text("Investment Recommendations", 20, yPos)
+    yPos += 12
+
+    doc.setFont("helvetica", "normal")
+    doc.setFontSize(10)
+    doc.setTextColor(0, 0, 0)
+
+    // Split by double newlines to create sections with blue sidebar effect
+    const sections = recommendations.split(/\n\n+/).filter(s => s.trim())
+    
+    for (let i = 0; i < sections.length; i++) {
+      const section = sections[i].trim()
+      
+      checkPageBreak(20)
+      
+      // Blue left border effect (simulated with a filled rectangle)
+      doc.setFillColor(37, 99, 235) // Blue-600
+      doc.rect(15, yPos - 3, 2, 15, "F") // Blue sidebar
+      
+      // Light background
+      doc.setFillColor(255, 255, 255)
+      doc.rect(18, yPos - 3, pageWidth - 36, 15, "F")
+      
+      // Section text
+      doc.setFontSize(9)
+      doc.setFont("helvetica", "normal")
+      doc.setTextColor(17, 24, 39) // Gray-900
+      const textHeight = addWrappedText(
+        section,
+        20,
+        yPos,
+        pageWidth - 40,
+        9,
+        [17, 24, 39]
+      )
+      
+      yPos += textHeight + 8
+    }
+    
+    yPos += 10
+  }
 
   // ===== COMPANIES ANALYSIS TABLE =====
   checkPageBreak(40)
@@ -119,16 +204,14 @@ export function generateDecisionPDF(data: LookupResponse, lawTitle?: string) {
 
   // Prepare table data
   const tableData = data.companies.map((company) => [
-    company.Ticker,
-    company.sector || "N/A",
-    `${(company.PredictedPosition * 100).toFixed(1)}%`,
+    company.ticker,
+    `${(company.position * 100).toFixed(1)}%`,
     `${(company.confidence_level * 100).toFixed(0)}%`,
-    company.market_cap_basic ? `$${(company.market_cap_basic / 1000).toFixed(1)}B` : "N/A",
   ])
 
   autoTable(doc, {
     startY: yPos,
-    head: [["Ticker", "Sector", "Position", "Confidence", "Market Cap"]],
+    head: [["Ticker", "Position", "Confidence"]],
     body: tableData,
     theme: "grid",
     headStyles: {
@@ -142,15 +225,13 @@ export function generateDecisionPDF(data: LookupResponse, lawTitle?: string) {
       cellPadding: 3,
     },
     columnStyles: {
-      0: { fontStyle: "bold", cellWidth: 25 },
-      1: { cellWidth: 40 },
-      2: { cellWidth: 25, halign: "center" },
-      3: { cellWidth: 28, halign: "center" },
-      4: { cellWidth: 30, halign: "right" },
+      0: { fontStyle: "bold", cellWidth: 40 },
+      1: { cellWidth: 40, halign: "center" },
+      2: { cellWidth: 40, halign: "center" },
     },
     willDrawCell: (data) => {
       // Color code the Position column background BEFORE text is drawn
-      if (data.column.index === 2 && data.section === "body") {
+      if (data.column.index === 1 && data.section === "body") {
         const position = Number.parseFloat(String(data.cell.text[0]).replace("%", "")) / 100
         if (position >= 0.3) {
           doc.setFillColor(200, 230, 201) // Light Green
@@ -176,7 +257,7 @@ export function generateDecisionPDF(data: LookupResponse, lawTitle?: string) {
   yPos += 12
 
   for (const [index, company] of data.companies.entries()) {
-    checkPageBreak(35)
+    checkPageBreak(50)
 
     // Company header
     doc.setFillColor(245, 245, 245)
@@ -185,10 +266,10 @@ export function generateDecisionPDF(data: LookupResponse, lawTitle?: string) {
     doc.setFontSize(12)
     doc.setFont("helvetica", "bold")
     doc.setTextColor(33, 33, 33)
-    doc.text(`${index + 1}. ${company.Ticker} - ${company.sector || "N/A"}`, 20, yPos)
+    doc.text(`${index + 1}. ${company.ticker}`, 20, yPos)
     
     // Position indicator
-    const position = company.PredictedPosition
+    const position = company.position
     let positionColor: [number, number, number]
     if (position >= 0.3) {
       positionColor = [76, 175, 80]
@@ -212,15 +293,39 @@ export function generateDecisionPDF(data: LookupResponse, lawTitle?: string) {
     doc.setFontSize(9)
     doc.setTextColor(60, 60, 60)
     const reasoningHeight = addWrappedText(company.reasoning, 20, yPos, pageWidth - 40, 9, [60, 60, 60])
-    yPos += reasoningHeight + 3
+    yPos += reasoningHeight + 5
 
-    // Confidence and Market Cap
+    // Regulatory Hook (if exists)
+    if (company.regulatory_hook) {
+      doc.setFontSize(8)
+      doc.setFont("helvetica", "bold")
+      doc.setTextColor(120, 40, 200)
+      doc.text("Regulatory Impact:", 20, yPos)
+      yPos += 4
+      doc.setFont("helvetica", "normal")
+      doc.setTextColor(80, 80, 80)
+      const regHeight = addWrappedText(company.regulatory_hook, 20, yPos, pageWidth - 40, 8, [80, 80, 80])
+      yPos += regHeight + 4
+    }
+
+    // Business Impact (if exists)
+    if (company.business_impact) {
+      doc.setFontSize(8)
+      doc.setFont("helvetica", "bold")
+      doc.setTextColor(41, 128, 185)
+      doc.text("Business Impact:", 20, yPos)
+      yPos += 4
+      doc.setFont("helvetica", "normal")
+      doc.setTextColor(80, 80, 80)
+      const bizHeight = addWrappedText(company.business_impact, 20, yPos, pageWidth - 40, 8, [80, 80, 80])
+      yPos += bizHeight + 4
+    }
+
+    // Confidence
     doc.setFontSize(8)
     doc.setTextColor(100, 100, 100)
     doc.text(
-      `Confidence: ${(company.confidence_level * 100).toFixed(0)}% | Market Cap: ${
-        company.market_cap_basic ? `$${(company.market_cap_basic / 1000).toFixed(1)}B` : "N/A"
-      }`,
+      `Confidence: ${(company.confidence_level * 100).toFixed(0)}%`,
       20,
       yPos
     )
@@ -233,88 +338,7 @@ export function generateDecisionPDF(data: LookupResponse, lawTitle?: string) {
     }
   }
 
-  // ===== AI STRATEGIC RECOMMENDATIONS =====
-  doc.addPage()
-  yPos = 20
 
-  doc.setFillColor(41, 128, 185)
-  doc.rect(0, 0, pageWidth, 15, "F")
-  doc.setTextColor(255, 255, 255)
-  doc.setFontSize(16)
-  doc.setFont("helvetica", "bold")
-  doc.text("AI Strategic Recommendations", pageWidth / 2, 10, { align: "center" })
-  yPos = 25
-
-  doc.setFont("helvetica", "normal")
-  doc.setFontSize(9)
-  doc.setTextColor(0, 0, 0)
-
-  // Parse markdown-style recommendations
-  const recommendations = data.ai_synthesis.recommendations
-  const sections = recommendations.split(/(?=##\s)/) // Split by ## headers
-
-  for (const section of sections) {
-    if (!section.trim()) continue
-
-    const lines = section.split("\n").filter((l) => l.trim())
-    
-    for (const line of lines) {
-      checkPageBreak(15)
-
-      if (line.startsWith("## ")) {
-        // Section header
-        if (yPos > 30) yPos += 5 // Add spacing before headers (except first)
-        doc.setFillColor(236, 240, 241)
-        doc.rect(15, yPos - 4, pageWidth - 30, 8, "F")
-        doc.setFontSize(12)
-        doc.setFont("helvetica", "bold")
-        doc.setTextColor(41, 128, 185)
-        const headerText = line.replace("## ", "").replaceAll(/🏆|☁️|📱|⚡|🪙|🚗|📺|🔴|⚖️|🏭|🌍|💡|✅|⚠️/gu, "").trim()
-        doc.text(headerText, 20, yPos)
-        yPos += 10
-      } else if (line.startsWith("### ")) {
-        // Subsection header
-        yPos += 3
-        doc.setFontSize(10)
-        doc.setFont("helvetica", "bold")
-        doc.setTextColor(52, 73, 94)
-        const subHeaderText = line.replace("### ", "").replaceAll(/🏆|☁️|📱|⚡|🪙|🚗|📺|🔴|⚖️|🏭|🌍|💡|✅|⚠️/gu, "").trim()
-        doc.text(subHeaderText, 20, yPos)
-        yPos += 7
-      } else if (/^\d+\./.exec(line)) {
-        // Numbered list
-        doc.setFontSize(9)
-        doc.setFont("helvetica", "normal")
-        doc.setTextColor(60, 60, 60)
-        const textHeight = addWrappedText(line, 25, yPos, pageWidth - 45, 9, [60, 60, 60])
-        yPos += textHeight + 3
-      } else if (line.startsWith("- ") || line.startsWith("* ")) {
-        // Bullet list
-        doc.setFontSize(9)
-        doc.setFont("helvetica", "normal")
-        doc.setTextColor(60, 60, 60)
-        const bulletText = line.replace(/^[-*]\s/, "")
-        doc.text("•", 22, yPos)
-        const textHeight = addWrappedText(bulletText, 28, yPos, pageWidth - 48, 9, [60, 60, 60])
-        yPos += textHeight + 2
-      } else if (line.startsWith("**") && line.endsWith("**")) {
-        // Bold text
-        doc.setFontSize(10)
-        doc.setFont("helvetica", "bold")
-        doc.setTextColor(33, 33, 33)
-        const boldText = line.replaceAll("**", "")
-        const textHeight = addWrappedText(boldText, 20, yPos, pageWidth - 40, 10, [33, 33, 33])
-        yPos += textHeight + 3
-      } else if (line.trim().length > 0) {
-        // Regular paragraph
-        doc.setFontSize(9)
-        doc.setFont("helvetica", "normal")
-        doc.setTextColor(60, 60, 60)
-        const textHeight = addWrappedText(line, 20, yPos, pageWidth - 40, 9, [60, 60, 60])
-        yPos += textHeight + 4
-      }
-    }
-  }
 
   // ===== FOOTER ON EVERY PAGE =====
   const totalPages = doc.getNumberOfPages()

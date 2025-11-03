@@ -72,13 +72,12 @@ export interface StreamingAnalysisUpdate {
  * Types pour la fonctionnalité PDF Export (Decision Analysis)
  */
 export interface CompanyDecision {
-  Ticker: string
-  PredictedPosition: number
+  ticker: string
+  position: number
   reasoning: string
   confidence_level: number
-  sector?: string
-  market_cap_basic?: number
-  change?: number
+  regulatory_hook?: string
+  business_impact?: string
 }
 
 export interface AISynthesis {

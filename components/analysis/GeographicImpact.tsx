@@ -10,7 +10,7 @@ interface GeographicImpactProps {
 
 export default function GeographicImpact({ countries }: GeographicImpactProps) {
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex flex-wrap gap-2 mb-1">
         {[...countries]
           .filter((country) => country.impact !== 0)
           .sort((a, b) => {

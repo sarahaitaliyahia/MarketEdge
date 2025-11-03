@@ -6,7 +6,6 @@ import { User, Plus, Upload, FileText, TrendingUp, PieChart, X, ChevronDown, Che
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
 import { useAnalysis } from "@/hooks/use-analysis"
-import { useLookupData } from "@/hooks/use-lookup"
 import { DotLottieReact } from '@lottiefiles/dotlottie-react'
 import GeographicImpact from "@/components/analysis/GeographicImpact"
 import SectorImpact from "@/components/analysis/SectorImpact"
@@ -15,6 +14,8 @@ import PotentialRisks from "@/components/analysis/PotentialRisks"
 import AnalystCommentary from "@/components/analysis/AnalystCommentary"
 import AnalysisChatbox from "@/components/analysis/AnalysisChatbox"
 import { PDFExportButton } from "@/components/analysis/PDFExportButton"
+import CompanyPositions from "@/components/analysis/CompanyPositions"
+import DecisionAnalysis from "@/components/analysis/DecisionAnalysis"
 
 interface AnalysisItem {
   id: string
@@ -59,6 +60,7 @@ export default function Dashboard() {
   const [isMarketImpactOpen, setIsMarketImpactOpen] = useState(false)
   const [isRiskLevelOpen, setIsRiskLevelOpen] = useState(false)
   const [isChatOpen, setIsChatOpen] = useState(false)
+  const [isTagsOpen, setIsTagsOpen] = useState(false)
 
   // Use the analysis hook
   const {
@@ -67,12 +69,11 @@ export default function Dashboard() {
     isAnalyzing,
     analysisResults,
     enhancedData,
+    lookupData,
+    decisionData,
     handleStartAnalysis: hookHandleStartAnalysis,
     resetAnalysis,
   } = useAnalysis()
-
-  // Use lookup data hook for PDF export (mock data)
-  const { data: lookupData } = useLookupData()
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -162,7 +163,7 @@ export default function Dashboard() {
             <img 
               src="/logo.svg" 
               alt="MarketEdge Logo" 
-              className="h-8 w-8 shadow-md"
+              className="h-10 w-10 shadow-md"
             />
             <h1 className="text-xl font-semibold text-foreground">MarketEdge</h1>
           </div>
@@ -172,13 +173,13 @@ export default function Dashboard() {
               onClick={() => setActiveTab("home")}
               className={`text-sm font-medium transition-all ${activeTab === "home" ? "text-foreground" : "text-foreground/60 hover:text-foreground"}`}
             >
-              Home
+              Run Analysis
             </button>
             <button
               onClick={() => setActiveTab("reports")}
               className={`text-sm font-medium transition-all ${activeTab === "reports" ? "text-foreground" : "text-foreground/60 hover:text-foreground"}`}
             >
-              Reports
+              Insights Archive
             </button>
           </nav>
 
@@ -200,19 +201,46 @@ export default function Dashboard() {
         >
           <div className="max-w-[1900px] mx-auto">
           {activeTab === "reports" ? (
-            <div className="animate-in fade-in duration-700">
+            <div className="animate-in fade-in duration-700 max-w-5xl mx-auto">
               <h2 className="text-2xl font-bold text-foreground mb-6">Recent Analysis</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="space-y-4">
                 {recentAnalysis.map((item) => (
                   <div
                     key={item.id}
                     onClick={() => setSelectedAnalysis(item)}
-                    className="p-5 border border-border rounded-xl hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer bg-white/70 backdrop-blur-sm"
+                    className="p-6 border border-border rounded-xl hover:shadow-lg transition-all duration-300 cursor-pointer bg-white/90 backdrop-blur-sm hover:border-blue-400"
                   >
-                    <h3 className="font-semibold text-foreground mb-2">{item.title}</h3>
-                    <p className="text-sm text-foreground/60 mb-3">{item.description}</p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-foreground/50">{item.timestamp}</span>
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-3">
+                          <h3 className="font-semibold text-lg text-foreground">{item.title}</h3>
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                            item.sentiment === 'Bullish' 
+                              ? 'bg-green-100 text-green-700 border border-green-200' 
+                              : item.sentiment === 'Bearish' 
+                              ? 'bg-red-100 text-red-700 border border-red-200' 
+                              : 'bg-yellow-100 text-yellow-700 border border-yellow-200'
+                          }`}>
+                            {item.sentiment}
+                          </span>
+                        </div>
+                        <p className="text-sm text-foreground/70 mb-4 leading-relaxed">{item.description}</p>
+                        <div className="flex items-center gap-4 text-xs text-foreground/50">
+                          <span className="flex items-center gap-1">
+                            <FileText className="h-3 w-3" />
+                            {item.timestamp}
+                          </span>
+                          <span>•</span>
+                          <span>10 companies analyzed</span>
+                          <span>•</span>
+                          <span>Full market impact report</span>
+                        </div>
+                      </div>
+                      <div className="flex-shrink-0">
+                        <Button variant="outline" size="sm" className="text-xs">
+                          View Details
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -229,34 +257,93 @@ export default function Dashboard() {
                   <h2 className="text-3xl font-bold text-foreground">{analysisResults.title}</h2>
                 </div>
                 <p className="text-foreground/70 mb-6 text-justify leading-relaxed">{analysisResults.summary}</p>
-              </div>
-
-              <div className="space-y-6 xl:space-y-8">
-                {/* Key Provisions - Affiche les données enrichies */}
-                <div className="bg-white p-6 rounded-lg border border-border shadow-sm">
-                  <div 
-                    className="flex items-center gap-4 cursor-pointer hover:bg-gray-50 -m-6 p-6 rounded-lg transition-colors"
-                    onClick={() => setIsEnhancedOpen(!isEnhancedOpen)}
-                  >
-                    <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                      <FileText className="h-6 w-6 text-blue-600" />
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-foreground mb-1">Key Findings & Analysis</h4>
-                      <p className="text-sm text-foreground/60">
-                        {enhancedData ? 'Comprehensive insights from AI analysis' : 'Loading...'}
-                      </p>
-                    </div>
-                    {enhancedData && (
-                      <div className="text-gray-400">
-                        {isEnhancedOpen ? (
-                          <ChevronUp className="h-5 w-5" />
-                        ) : (
-                          <ChevronDown className="h-5 w-5" />
+                
+                {/* Tags Section - Collapsible */}
+                {enhancedData && enhancedData.law_analysis_output && 
+                 ((enhancedData.law_analysis_output.impact?.related_tags_macro && enhancedData.law_analysis_output.impact.related_tags_macro.length > 0) || 
+                  (enhancedData.law_analysis_output.impact?.related_tags_micro && enhancedData.law_analysis_output.impact.related_tags_micro.length > 0)) && (
+                  <div className="mt-4 pt-4 border-t border-blue-300">
+                    <button
+                      onClick={() => setIsTagsOpen(!isTagsOpen)}
+                      className="flex items-center gap-2 text-sm font-medium text-foreground/80 hover:text-foreground transition-colors mb-3"
+                    >
+                      {isTagsOpen ? (
+                        <ChevronUp className="h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4" />
+                      )}
+                      <span>Related Tags ({(enhancedData.law_analysis_output.impact?.related_tags_macro?.length || 0) + (enhancedData.law_analysis_output.impact?.related_tags_micro?.length || 0)})</span>
+                    </button>
+                    
+                    {isTagsOpen && (
+                      <div className="space-y-3">
+                        {/* Macro Tags */}
+                        {enhancedData.law_analysis_output.impact?.related_tags_macro && 
+                         enhancedData.law_analysis_output.impact.related_tags_macro.length > 0 && (
+                          <div>
+                            <p className="text-xs font-medium text-foreground/60 mb-2">Macro Tags</p>
+                            <div className="flex flex-wrap gap-1.5">
+                              {enhancedData.law_analysis_output.impact.related_tags_macro.map((tag: string, i: number) => (
+                                <span key={i} className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-xs">
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Micro Tags */}
+                        {enhancedData.law_analysis_output.impact?.related_tags_micro && 
+                         enhancedData.law_analysis_output.impact.related_tags_micro.length > 0 && (
+                          <div>
+                            <p className="text-xs font-medium text-foreground/60 mb-2">Micro Tags</p>
+                            <div className="flex flex-wrap gap-1.5">
+                              {enhancedData.law_analysis_output.impact.related_tags_micro.slice(0, 15).map((tag: string, i: number) => (
+                                <span key={i} className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full text-xs">
+                                  {tag}
+                                </span>
+                              ))}
+                              {enhancedData.law_analysis_output.impact.related_tags_micro.length > 15 && (
+                                <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full text-xs">
+                                  +{enhancedData.law_analysis_output.impact.related_tags_micro.length - 15} more
+                                </span>
+                              )}
+                            </div>
+                          </div>
                         )}
                       </div>
                     )}
                   </div>
+                )}
+              </div>
+
+              <div className="space-y-6 xl:space-y-8">
+                {/* Analysis Insights - Appears after analyse completes */}
+                {analysisResults && (
+                  <div className="bg-white p-6 rounded-lg border border-border shadow-sm">
+                    <div 
+                      className="flex items-center gap-4 cursor-pointer hover:bg-gray-50 -m-6 p-6 rounded-lg transition-colors"
+                      onClick={() => setIsEnhancedOpen(!isEnhancedOpen)}
+                    >
+                      <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                        <FileText className="h-6 w-6 text-blue-600" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-foreground mb-1">Document Analysis</h4>
+                        <p className="text-sm text-foreground/60">
+                          {enhancedData ? 'Key findings and potential risks from the document' : 'Loading...'}
+                        </p>
+                      </div>
+                      {enhancedData && (
+                        <div className="text-gray-400">
+                          {isEnhancedOpen ? (
+                            <ChevronUp className="h-5 w-5" />
+                          ) : (
+                            <ChevronDown className="h-5 w-5" />
+                          )}
+                        </div>
+                      )}
+                    </div>
                   
                   <div 
                     className={`overflow-hidden transition-all duration-500 ease-in-out ${
@@ -264,43 +351,68 @@ export default function Dashboard() {
                     }`}
                   >
                     {enhancedData && enhancedData.law_analysis_output && (
-                      <div className="mt-4">
-                        <KeyFindingsSection 
-                          keyFindings={enhancedData.law_analysis_output.analysis_notes?.key_findings}
-                          confidenceMetrics={enhancedData.law_analysis_output.confidence_metrics}
-                          macroTags={enhancedData.law_analysis_output.impact?.related_tags_macro}
-                          microTags={enhancedData.law_analysis_output.impact?.related_tags_micro}
-                        />
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Market Impact */}
-                <div className="bg-white p-6 rounded-lg border border-border shadow-sm">
-                  <div 
-                    className="flex items-center gap-4 cursor-pointer hover:bg-gray-50 -m-6 p-6 rounded-lg transition-colors"
-                    onClick={() => setIsMarketImpactOpen(!isMarketImpactOpen)}
-                  >
-                    <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                      <TrendingUp className="h-6 w-6 text-green-600" />
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-foreground mb-1">Market Impact Analysis</h4>
-                      <p className="text-sm text-foreground/60">
-                        {enhancedData ? 'Sector impacts, risks, and detailed country analysis' : 'Loading...'}
-                      </p>
-                    </div>
-                    {enhancedData && (
-                      <div className="text-gray-400">
-                        {isMarketImpactOpen ? (
-                          <ChevronUp className="h-5 w-5" />
-                        ) : (
-                          <ChevronDown className="h-5 w-5" />
+                      <div className="mt-4 space-y-6">
+                        {/* Geographic Impact */}
+                        {enhancedData.law_analysis_output.impact?.countries_affected && 
+                         enhancedData.law_analysis_output.impact.countries_affected.length > 0 && (
+                          <div>
+                            <h5 className="font-semibold text-foreground mb-3">Geographic Impact</h5>
+                            <GeographicImpact countries={enhancedData.law_analysis_output.impact.countries_affected} />
+                          </div>
+                        )}
+                        
+                        {/* Key Findings */}
+                        {enhancedData.law_analysis_output.analysis_notes?.key_findings && 
+                         enhancedData.law_analysis_output.analysis_notes.key_findings.length > 0 && (
+                          <div>
+                            <div className="flex items-center gap-2 mb-3">
+                              <h5 className="font-semibold text-foreground">Key Findings</h5>
+                              <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full bg-blue-500/10 text-blue-500 border border-blue-500/20">
+                                {enhancedData.law_analysis_output.analysis_notes.key_findings.length}
+                              </span>
+                            </div>
+                            <ul className="space-y-2">
+                              {enhancedData.law_analysis_output.analysis_notes.key_findings.map((finding: string, i: number) => (
+                                <li key={i} className="flex gap-2 text-sm text-foreground/80">
+                                  <span className="text-blue-600 font-bold mt-0.5">•</span>
+                                  <span>{finding}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
                         )}
                       </div>
                     )}
                   </div>
+                  </div>
+                )}
+
+                {/* Market Impact - Appears after Key Findings */}
+                {analysisResults && (
+                  <div className="bg-white p-6 rounded-lg border border-border shadow-sm">
+                    <div 
+                      className="flex items-center gap-4 cursor-pointer hover:bg-gray-50 -m-6 p-6 rounded-lg transition-colors"
+                      onClick={() => setIsMarketImpactOpen(!isMarketImpactOpen)}
+                    >
+                      <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                        <TrendingUp className="h-6 w-6 text-green-600" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-foreground mb-1">Market Impact Analysis</h4>
+                        <p className="text-sm text-foreground/60">
+                          {lookupData ? 'Company positions and market analysis' : 'Loading...'}
+                        </p>
+                      </div>
+                      {lookupData && (
+                        <div className="text-gray-400">
+                          {isMarketImpactOpen ? (
+                            <ChevronUp className="h-5 w-5" />
+                          ) : (
+                            <ChevronDown className="h-5 w-5" />
+                          )}
+                        </div>
+                      )}
+                    </div>
                   
                   <div 
                     className={`overflow-hidden transition-all duration-500 ease-in-out ${
@@ -314,73 +426,89 @@ export default function Dashboard() {
                           <SectorImpact sectors={enhancedData.law_analysis_output.impact.sectors} />
                         )}
                         
-                        {/* Potential Risks */}
-                        {enhancedData.law_analysis_output.analysis_notes?.potential_risks && (
-                          <PotentialRisks risks={enhancedData.law_analysis_output.analysis_notes.potential_risks} />
-                        )}
-                        
                         {/* Analyst Commentary */}
                         {enhancedData.law_analysis_output.analysis_notes?.analyst_comments && (
                           <AnalystCommentary commentary={enhancedData.law_analysis_output.analysis_notes.analyst_comments} />
                         )}
                         
-                        {/* Geographic Impact */}
-                        {enhancedData.law_analysis_output.impact?.countries_affected && (
+                        {/* Potential Risks */}
+                        {enhancedData.law_analysis_output.analysis_notes?.potential_risks && 
+                         enhancedData.law_analysis_output.analysis_notes.potential_risks.length > 0 && (
                           <div>
-                            <h5 className="font-semibold text-foreground mb-3">Geographic Impact</h5>
-                            <GeographicImpact countries={enhancedData.law_analysis_output.impact.countries_affected} />
+                            <div className="flex items-center gap-2 mb-3">
+                              <h5 className="font-semibold text-foreground">Potential Risks</h5>
+                              <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full bg-red-500/10 text-red-500 border border-red-500/20">
+                                {enhancedData.law_analysis_output.analysis_notes.potential_risks.length}
+                              </span>
+                            </div>
+                            <ul className="space-y-2">
+                              {enhancedData.law_analysis_output.analysis_notes.potential_risks.map((risk: string, i: number) => (
+                                <li key={i} className="flex gap-2 text-sm text-foreground/80">
+                                  <span className="text-red-600 font-bold mt-0.5">⚠</span>
+                                  <span>{risk}</span>
+                                </li>
+                              ))}
+                            </ul>
                           </div>
                         )}
                       </div>
                     )}
                   </div>
-                </div>
+                  </div>
+                )}
 
-                {/* Risk Assessment */}
-                <div className="bg-white p-6 rounded-lg border border-border shadow-sm">
-                  <div 
-                    className="flex items-center gap-4 cursor-pointer hover:bg-gray-50 -m-6 p-6 rounded-lg transition-colors"
-                    onClick={() => setIsRiskLevelOpen(!isRiskLevelOpen)}
-                  >
-                    <div className="h-12 w-12 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
-                      <PieChart className="h-6 w-6 text-purple-600" />
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-foreground mb-1">Risk Assessment</h4>
-                      <p className="text-sm text-foreground/60">
-                        Overall risk level and key risk factors
-                      </p>
-                    </div>
-                    {enhancedData && (
-                      <div className="text-gray-400">
-                        {isRiskLevelOpen ? (
-                          <ChevronUp className="h-5 w-5" />
-                        ) : (
-                          <ChevronDown className="h-5 w-5" />
-                        )}
+                {/* Investment Decision Analysis - Appears after Market Impact */}
+                {lookupData && (
+                  <div className="bg-white p-6 rounded-lg border border-border shadow-sm">
+                    <div 
+                      className="flex items-center gap-4 cursor-pointer hover:bg-gray-50 -m-6 p-6 rounded-lg transition-colors"
+                      onClick={() => setIsRiskLevelOpen(!isRiskLevelOpen)}
+                    >
+                      <div className="h-12 w-12 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
+                        <PieChart className="h-6 w-6 text-purple-600" />
                       </div>
-                    )}
-                  </div>
-                  
-                  <div 
-                    className={`overflow-hidden transition-all duration-500 ease-in-out ${
-                      isRiskLevelOpen ? 'max-h-[10000px] opacity-100' : 'max-h-0 opacity-0'
-                    }`}
-                  >
-                    <div className="mt-4">
-                      <p className="text-center text-foreground/40 italic py-8">
-                        Risk assessment data will be available soon
-                      </p>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-foreground mb-1">Investment Decision Analysis</h4>
+                        <p className="text-sm text-foreground/60">
+                          {decisionData ? 'AI-powered recommendations and strategic insights' : 'Loading...'}
+                        </p>
+                      </div>
+                      {decisionData && (
+                        <div className="text-gray-400">
+                          {isRiskLevelOpen ? (
+                            <ChevronUp className="h-5 w-5" />
+                          ) : (
+                            <ChevronDown className="h-5 w-5" />
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div 
+                      className={`overflow-hidden transition-all duration-500 ease-in-out ${
+                        isRiskLevelOpen ? 'max-h-[10000px] opacity-100' : 'max-h-0 opacity-0'
+                      }`}
+                    >
+                      {decisionData && (
+                        <div className="mt-4">
+                          <DecisionAnalysis 
+                            decisionData={decisionData}
+                            companies={lookupData?.companies}
+                            confidenceMetrics={enhancedData?.law_analysis_output?.confidence_metrics}
+                          />
+                        </div>
+                      )}
                     </div>
                   </div>
-                </div>
+                )}
 
-                {/* PDF Export Button */}
+                {/* PDF Export Button - Only enabled when decision data is available */}
                 {lookupData && (
                   <div className="mt-6 flex justify-center">
                     <PDFExportButton 
                       data={lookupData} 
                       lawTitle={analysisResults?.title}
+                      disabled={!decisionData}
                     />
                   </div>
                 )}
@@ -403,7 +531,7 @@ export default function Dashboard() {
               ) : (
                 <div className={`mb-8 transition-all duration-700 ${isTransitioning ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
                   <div className="mb-6 mt-0">
-                    <h2 className="text-3xl font-bold text-center text-foreground mb-2">Analyze New Law Proposal</h2>
+                    <h2 className="text-3xl font-bold text-center text-foreground mb-2">Discover how every law shapes the market</h2>
                     <p className="text-center text-foreground/60">
                       Upload a law proposal document (HTML, TXT, XML, PDF) to get AI-powered market impact analysis
                     </p>
@@ -441,7 +569,7 @@ export default function Dashboard() {
                         </span>
                         Financial Context
                       </h4>
-                      <p className="text-sm text-foreground/60">Cross-reference with SEC filings and corporate data</p>
+                      <p className="text-sm text-foreground/60">Cross-analyze with SEC and market data</p>
                     </div>
 
                     <div className="text-center bg-white/50 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-purple-100/50">
@@ -612,8 +740,8 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Side Chat Button - Only show when session_id is available */}
-      {analysisResults && enhancedData?.session_id && !selectedAnalysis && !isChatOpen && (
+      {/* Side Chat Button - Only show when decisionData is available */}
+      {analysisResults && enhancedData?.session_id && decisionData && !selectedAnalysis && !isChatOpen && (
         <button
           onClick={() => setIsChatOpen(true)}
           className="fixed top-1/2 right-0 -translate-y-1/2 z-40 py-6 px-3 bg-gradient-to-b from-blue-600 to-indigo-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:px-4 flex flex-col items-center justify-center gap-3 rounded-l-xl group"
@@ -626,8 +754,8 @@ export default function Dashboard() {
         </button>
       )}
 
-      {/* Chat Component - Only available when session_id is available */}
-      {analysisResults && enhancedData?.session_id && !selectedAnalysis && (
+      {/* Chat Component - Only available when decisionData is available */}
+      {analysisResults && enhancedData?.session_id && decisionData && !selectedAnalysis && (
         <AnalysisChatbox
           sessionId={enhancedData.session_id}
           isOpen={isChatOpen}

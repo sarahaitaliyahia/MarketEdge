@@ -1,10 +1,24 @@
 import { useState } from 'react'
+import { LookupResponse } from '@/lib/types'
 
 interface AnalysisResults {
   title: string
   summary: string
   sectors: string[]
   sentiment: 'Bullish' | 'Neutral' | 'Bearish'
+}
+
+interface DecisionData {
+  analysis_id?: string
+  saved_to_dynamodb?: boolean
+  analysis?: {
+    ai_synthesis?: {
+      summary?: string
+      recommendations?: string
+      metadata?: any
+    }
+    companies?: any[]
+  }
 }
 
 interface EnhancedData {
@@ -46,6 +60,8 @@ export function useAnalysis() {
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [analysisResults, setAnalysisResults] = useState<AnalysisResults | null>(null)
   const [enhancedData, setEnhancedData] = useState<EnhancedData | null>(null)
+  const [lookupData, setLookupData] = useState<LookupResponse | null>(null)
+  const [decisionData, setDecisionData] = useState<DecisionData | null>(null)
 
   const getDocumentType = (file: File): string => {
     const extension = file.name.toLowerCase().split('.').pop()
@@ -220,50 +236,123 @@ export function useAnalysis() {
             } : null)
           }, 300)
           
-          // STEP 3: Load enhanced data and get analysis_id from /decision
+          // STEP 3: Load enhanced data and call /lookup
           setTimeout(async () => {
             if (lawOutput) {
-              let sessionId = result.session_id || jobId
-              
-              // Call /decision endpoint to get the real analysis_id
-              try {
-                console.log('[Analysis] Calling /decision with analysis data')
-                const decisionResponse = await fetch('/api/decision', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify({
-                    sp500_analysis: analysisData
-                  }),
-                })
-                
-                if (decisionResponse.ok) {
-                  const decisionData = await decisionResponse.json()
-                  if (decisionData.analysis_id) {
-                    sessionId = decisionData.analysis_id
-                    console.log('[Analysis] Got analysis_id from /decision:', sessionId)
-                  } else {
-                    console.warn('[Analysis] /decision response missing analysis_id, using jobId')
-                  }
-                } else {
-                  const errorText = await decisionResponse.text()
-                  console.error('[Analysis] /decision failed:', decisionResponse.status, errorText)
-                  console.warn('[Analysis] Using jobId as fallback')
-                }
-              } catch (error) {
-                console.error('[Analysis] Error calling /decision:', error)
-                console.log('[Analysis] Using jobId as fallback')
-              }
-              
-              console.log('[Analysis] Final session ID for chat:', sessionId)
-              
               const enhancedDataWithSession = { 
-                session_id: sessionId,
+                session_id: result.session_id || jobId,
                 law_analysis_output: lawOutput 
               }
               
               setEnhancedData(enhancedDataWithSession)
+              
+              // Call /lookup endpoint
+              try {
+                console.log('[Analysis] Calling /lookup with enhanced data')
+                const lookupResponse = await fetch('/api/lookup', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify(enhancedDataWithSession),
+                })
+                
+                if (lookupResponse.ok) {
+                  const lookupResult = await lookupResponse.json()
+                  
+                  // Check if it's async (has job_id) or sync
+                  if (lookupResult.job_id) {
+                    console.log('[Analysis] /lookup returned job_id, polling...')
+                    
+                    // Poll for lookup results
+                    const lookupCompletedData = await pollAnalysisStatus(lookupResult.job_id)
+                    const lookupFinalResult = lookupCompletedData.result || lookupCompletedData
+                    
+                    console.log('[Analysis] /lookup completed:', lookupFinalResult)
+                    setLookupData(lookupFinalResult)
+                    
+                    // Call /decision endpoint with lookup results
+                    console.log('[Analysis] Calling /decision with lookup data')
+                    const decisionResponse = await fetch('/api/decision', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                      },
+                      body: JSON.stringify({
+                        sp500_analysis: lookupFinalResult
+                      }),
+                    })
+                    
+                    if (decisionResponse.ok) {
+                      const decisionResult = await decisionResponse.json()
+                      
+                      // Check if it's async or sync
+                      if (decisionResult.job_id) {
+                        console.log('[Analysis] /decision returned job_id, polling...')
+                        const decisionCompletedData = await pollAnalysisStatus(decisionResult.job_id)
+                        const decisionFinalResult = decisionCompletedData.result || decisionCompletedData
+                        
+                        console.log('[Analysis] /decision completed:', decisionFinalResult)
+                        setDecisionData(decisionFinalResult)
+                        
+                        // Update session_id with analysis_id if available
+                        if (decisionFinalResult.analysis_id) {
+                          setEnhancedData(prev => prev ? {
+                            ...prev,
+                            session_id: decisionFinalResult.analysis_id
+                          } : null)
+                        }
+                      } else {
+                        // Sync response
+                        console.log('[Analysis] /decision completed synchronously')
+                        console.log('[Analysis] /decision data:', decisionResult)
+                        console.log('[Analysis] /decision analysis object:', decisionResult.analysis)
+                        setDecisionData(decisionResult)
+                        
+                        if (decisionResult.analysis_id) {
+                          setEnhancedData(prev => prev ? {
+                            ...prev,
+                            session_id: decisionResult.analysis_id
+                          } : null)
+                        }
+                      }
+                    } else {
+                      console.error('[Analysis] /decision failed:', decisionResponse.status)
+                    }
+                  } else {
+                    // Sync response
+                    console.log('[Analysis] /lookup completed synchronously')
+                    setLookupData(lookupResult)
+                    
+                    // Continue with decision...
+                    const decisionResponse = await fetch('/api/decision', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                      },
+                      body: JSON.stringify({
+                        sp500_analysis: lookupResult
+                      }),
+                    })
+                    
+                    if (decisionResponse.ok) {
+                      const decisionResult = await decisionResponse.json()
+                      setDecisionData(decisionResult)
+                      
+                      if (decisionResult.analysis_id) {
+                        setEnhancedData(prev => prev ? {
+                          ...prev,
+                          session_id: decisionResult.analysis_id
+                        } : null)
+                      }
+                    }
+                  }
+                } else {
+                  console.error('[Analysis] /lookup failed:', lookupResponse.status)
+                }
+              } catch (error) {
+                console.error('[Analysis] Error in lookup/decision flow:', error)
+              }
             }
           }, 600)
         }).catch(error => {
@@ -314,6 +403,8 @@ export function useAnalysis() {
     setUploadedFile(null)
     setAnalysisResults(null)
     setEnhancedData(null)
+    setLookupData(null)
+    setDecisionData(null)
     setIsAnalyzing(false)
   }
 
@@ -323,6 +414,8 @@ export function useAnalysis() {
     isAnalyzing,
     analysisResults,
     enhancedData,
+    lookupData,
+    decisionData,
     handleStartAnalysis,
     resetAnalysis,
   }

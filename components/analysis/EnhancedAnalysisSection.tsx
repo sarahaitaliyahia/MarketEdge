@@ -18,10 +18,10 @@ export function EnhancedAnalysisSection({ enhancedData, isOpen, onToggle }: Enha
         </div>
         <div className="flex-1">
           <h4 className={`font-semibold mb-1 ${enhancedData ? 'text-foreground' : 'text-foreground/40'}`}>
-            Key Findings & Analysis
+            Document Analysis
           </h4>
           <p className={`text-sm ${enhancedData ? 'text-foreground/60' : 'text-foreground/40'}`}>
-            {enhancedData ? 'Comprehensive insights from AI analysis' : 'Loading enhanced data...'}
+            {enhancedData ? 'Key findings and potential risks from the document' : 'Loading enhanced data...'}
           </p>
         </div>
         <div className="text-gray-400">

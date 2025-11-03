@@ -1,94 +1,84 @@
 {
   "companies": [
     {
-      "Ticker": "AAPL",
-      "PredictedPosition": 0.72,
+      "ticker": "AAPL",
+      "position": 0.72,
       "reasoning": "Strong Q4 earnings beat expectations with revenue of $89.5B (+6% YoY). iPhone 15 demand remains resilient in China despite supply chain pressures. Services revenue grew 16% to $22.3B. Growing AI integration in devices positions Apple well for next-generation computing. However, regulatory pressures in EU and China present headwinds. Valuation at 28x P/E is reasonable given growth trajectory.",
       "confidence_level": 0.61,
-      "sector": "Technology",
-      "market_cap_basic": 2600000,
-      "change": 0.035
+      "regulatory_hook": "Digital Markets Act (DMA) compliance requirements in EU forcing App Store changes. Potential antitrust investigations regarding app distribution and payment systems could impact services revenue streams.",
+      "business_impact": "Services segment (22% of revenue) may face margin pressure from regulatory-mandated changes to App Store policies. Alternative payment systems could reduce 30% commission rate. Estimated 2-3% impact on overall margins if EU rules globalized."
     },
     {
-      "Ticker": "TSLA",
-      "PredictedPosition": 0.35,
+      "ticker": "TSLA",
+      "position": 0.35,
       "reasoning": "Positive long-term growth potential in energy storage (Megapack orders up 130%) and AI-driven robotics (Optimus development progressing). Full Self-Driving subscriptions growing. However, short-term margins under pressure from EV price wars, particularly in China where BYD is gaining share. Cybertruck production ramp slower than expected. Valuation remains stretched at 60x forward P/E.",
       "confidence_level": 0.47,
-      "sector": "Automotive",
-      "market_cap_basic": 900000,
-      "change": 0.012
+      "regulatory_hook": "EU Battery Regulation mandates full supply chain transparency and carbon footprint disclosure by 2025. Full Self-Driving features face increased scrutiny from NHTSA following multiple investigations into Autopilot-related incidents.",
+      "business_impact": "Battery compliance costs estimated at $150M annually for EU operations. FSD rollout delays in Europe and potential restrictions in US could impact $15B autonomous driving revenue opportunity. Energy storage business benefits from IRA tax credits."
     },
     {
-      "Ticker": "AMZN",
-      "PredictedPosition": 0.58,
+      "ticker": "AMZN",
+      "position": 0.58,
       "reasoning": "AWS showing strong rebound in enterprise demand with 12% growth, margin expansion to 30%. Cloud optimization cycle ending, new AI workloads driving growth. Retail segment stable with Prime membership at all-time highs. Advertising business growing 26% YoY to $12B quarterly. Consumer spending patterns remain stable despite macro uncertainty. International expansion in India and Southeast Asia promising.",
       "confidence_level": 0.55,
-      "sector": "Consumer Discretionary",
-      "market_cap_basic": 1700000,
-      "change": 0.022
+      "regulatory_hook": "Digital Services Act (DSA) imposes content moderation obligations on marketplace. EU Data Act requires easier data portability from AWS. FTC investigating potential anti-competitive practices in retail marketplace favoring Amazon private label brands.",
+      "business_impact": "DSA compliance costs estimated at $500M-$800M annually. AWS may face 5-10% pricing pressure if data portability increases competition. Retail marketplace changes could reduce private label sales ($30B segment) by 10-15% if FTC mandates algorithm neutrality."
     },
     {
-      "Ticker": "NVDA",
-      "PredictedPosition": 0.89,
+      "ticker": "NVDA",
+      "position": 0.89,
       "reasoning": "Dominant position in AI chip market with 95%+ market share in data center GPUs. H100 and new H200 chips sold out through 2025. Strong ecosystem lock-in among hyperscalers (MSFT, GOOGL, AMZN, META all expanding AI infrastructure). Gaming GPU demand recovering. Automotive and edge AI segments growing. Competition from AMD and custom chips (TPU, Trainium) emerging but NVIDIA's CUDA moat remains strong. Forward P/E of 35x justified by 100%+ revenue growth.",
       "confidence_level": 0.73,
-      "sector": "Semiconductors",
-      "market_cap_basic": 1500000,
-      "change": 0.048
+      "regulatory_hook": "US export controls restrict advanced AI chip sales (A100, H100) to China and Russia. EU AI Act classifies high-performance computing for certain AI applications as high-risk, requiring conformity assessments. Semiconductor supply chain resilience initiatives may mandate manufacturing diversification.",
+      "business_impact": "China export restrictions eliminate $5-7B annual revenue (15% of data center segment). Alternative China-specific chips (H20) have lower margins. AI Act compliance adds certification costs but unlikely to materially impact sales. Government incentives for domestic manufacturing could reduce costs long-term."
     },
     {
-      "Ticker": "META",
-      "PredictedPosition": 0.44,
+      "ticker": "META",
+      "position": 0.44,
       "reasoning": "Ad revenue stabilization with Q4 showing 23% growth driven by AI-powered targeting improvements. Reels engagement up 40% YoY, monetization improving. Promising AI model integration (Llama 3) and competitive positioning in generative AI. However, Reality Labs burning $4B/quarter with unclear path to profitability. Regulatory scrutiny in EU intensifying (DSA, DMA compliance costs). Metaverse ROI concerns persist despite Vision Pro competition.",
       "confidence_level": 0.49,
-      "sector": "Technology",
-      "market_cap_basic": 900000,
-      "change": 0.018
+      "regulatory_hook": "Digital Markets Act designates Facebook, Instagram, WhatsApp as gatekeepers requiring interoperability with competing messaging services. Digital Services Act mandates content moderation transparency and algorithmic accountability. Multiple ongoing privacy investigations under GDPR with potential fines up to €4B.",
+      "business_impact": "Messaging interoperability could fragment user base and reduce engagement metrics. Ad targeting restrictions under privacy regulations may reduce ARPU by 8-12% in EU markets ($12B annual impact). DSA compliance costs $2B+ annually. DMA limits cross-platform data sharing, potentially reducing ad effectiveness by 15-20%."
     },
     {
-      "Ticker": "XOM",
-      "PredictedPosition": -0.22,
+      "ticker": "XOM",
+      "position": -0.22,
       "reasoning": "Energy transition policies (IRA, EU Green Deal) expected to impact long-term profitability despite record 2024 earnings. Oil price volatility poses short-term uncertainty with Brent crude ranging $75-85/barrel. Guyana production growing but offset by declining legacy fields. Share buyback program ($20B annually) supporting stock but capex discipline limiting growth. Renewable investments (offshore wind, carbon capture) still <10% of portfolio. ESG pressure from institutional investors increasing.",
       "confidence_level": 0.58,
-      "sector": "Energy",
-      "market_cap_basic": 350000,
-      "change": -0.024
+      "regulatory_hook": "EU Carbon Border Adjustment Mechanism (CBAM) imposes carbon pricing on imported fossil fuels. IRA incentivizes renewable energy and penalizes fossil fuel investments through tax structures. Potential windfall profit taxes being debated in US Congress. SEC climate disclosure rules require detailed emissions reporting.",
+      "business_impact": "CBAM could increase EU import costs by $1-2B annually. Accelerated asset stranding risk as countries implement net-zero targets - estimated 20-30% of reserves may become uneconomical by 2035. Loss of institutional capital access as ESG mandates tighten. Carbon tax exposure of $40-60/ton could reduce margins by 15-20%."
     },
     {
-      "Ticker": "NFLX",
-      "PredictedPosition": 0.27,
+      "ticker": "NFLX",
+      "position": 0.27,
       "reasoning": "Content strategy showing results with strong slate in Q4 (Wednesday S2, Squid Game 2). Global subscriber growth steady at 8M net adds, password-sharing crackdown contributing 5M. Ad-tier gaining traction with 15M subscribers. However, valuation stretched at 35x P/E with slowing growth. Competition intensifying from Disney+, Max, Paramount+. Content costs rising (writers/actors strike settlements). International markets saturating. Gaming initiatives not gaining meaningful traction yet.",
       "confidence_level": 0.42,
-      "sector": "Communication Services",
-      "market_cap_basic": 150000,
-      "change": 0.005
+      "regulatory_hook": "EU Audiovisual Media Services Directive requires 30% European content quota. Digital Services Act mandates content moderation and transparency for video platforms. Brazilian and Indian regulators increasing content restrictions and taxation on streaming services.",
+      "business_impact": "EU content quotas increase production costs by $500M-$700M annually for region-specific content with potentially lower ROI. DSA compliance costs $100-150M. International market regulations (Brazil tax, India censorship) may slow growth in key emerging markets representing 30% of subscriber base."
     },
     {
-      "Ticker": "GOOGL",
-      "PredictedPosition": 0.64,
+      "ticker": "GOOGL",
+      "position": 0.64,
       "reasoning": "Search business performing well with 8% revenue growth despite AI chatbot competition concerns. GCP cloud division growing 28% with strong AI infrastructure demand. Gemini model showing competitive performance vs GPT-4. YouTube revenue up 12% with Shorts monetization improving. AI-powered search features (SGE) rolling out carefully to preserve ad revenue. However, DOJ antitrust case represents significant tail risk. TAC (traffic acquisition costs) rising as Apple deal under scrutiny.",
       "confidence_level": 0.68,
-      "sector": "Technology",
-      "market_cap_basic": 1600000,
-      "change": 0.031
+      "regulatory_hook": "DOJ antitrust lawsuit seeks to break up Google's search monopoly, potentially forcing divestiture of Chrome or Android. Digital Markets Act requires search engine choice screens and limits self-preferencing in search results. EU AI Act classifies certain AI systems as high-risk requiring audits. Privacy regulations globally restrict tracking and targeting.",
+      "business_impact": "Chrome/Android divestiture could reduce search distribution and market share by 15-25%, impacting $50-80B in annual revenue. DMA compliance reduces search ad effectiveness, estimated 8-10% revenue impact in EU. Apple search deal ($18B annually) at risk from antitrust scrutiny. Privacy regulations reducing ad targeting precision may lower ad prices by 5-8%."
     },
     {
-      "Ticker": "MSFT",
-      "PredictedPosition": 0.79,
+      "ticker": "MSFT",
+      "position": 0.79,
       "reasoning": "Azure growth accelerating to 29% driven by AI workloads (Azure OpenAI Service adoption surging). Office 365 Copilot uptake exceeding expectations with 50% of Fortune 500 in pilots. Strong enterprise positioning with integrated AI across product suite. Gaming segment performing well post-Activision acquisition ($69B). Diversification across sectors (cloud, productivity, gaming, LinkedIn) reducing risk. Forward P/E of 32x reasonable given 15%+ revenue growth and margin expansion. OpenAI partnership providing AI leadership.",
       "confidence_level": 0.74,
-      "sector": "Technology",
-      "market_cap_basic": 2200000,
-      "change": 0.039
+      "regulatory_hook": "EU Cloud Act and Data Act require data localization and easier cloud switching. FTC scrutinized Activision acquisition heavily. Copilot AI features face potential regulation under EU AI Act as workplace automation tools. UK Competition and Markets Authority investigating Azure-OpenAI partnership for potential anti-competitive effects.",
+      "business_impact": "Data localization requirements increase Azure infrastructure costs by $1-2B but also create switching barriers. OpenAI exclusivity at risk if regulators mandate broader access, potentially commoditizing AI features. Activision deal added $15B revenue but regulatory delays cost 18 months of integration benefits. EU AI Act compliance minimal given enterprise focus."
     },
     {
-      "Ticker": "COIN",
-      "PredictedPosition": -0.41,
+      "ticker": "COIN",
+      "position": -0.41,
       "reasoning": "Crypto market recovery uncertain with Bitcoin volatility ($38K-$52K range) impacting trading volumes. High regulatory risk in U.S. with SEC lawsuits ongoing (staking, securities classification). Dependency on trading volume creates revenue volatility (80% of revenue from transaction fees). Competition from Binance, Kraken intensifying with lower fee structures. International expansion hampered by regulatory uncertainty. Base L2 network showing promise but early stage. Positive: institutional custody growing, potential spot Bitcoin ETF approval could drive volumes.",
       "confidence_level": 0.52,
-      "sector": "Financials",
-      "market_cap_basic": 50000,
-      "change": -0.045
+      "regulatory_hook": "SEC lawsuit alleges Coinbase operates as unregistered securities exchange and broker. Markets in Crypto-Assets Regulation (MiCA) in EU imposes strict licensing requirements. Potential US stablecoin legislation could restrict offerings. AML/KYC requirements globally increasing compliance costs.",
+      "business_impact": "SEC case could force delisting of 50+ tokens classified as securities, eliminating 30-40% of trading volume ($1-2B quarterly revenue). MiCA compliance requires EU entity restructuring ($200-300M cost). Stablecoin restrictions may limit USDC integration. Enhanced AML costs $100M+ annually. Positive: regulatory clarity could enable institutional adoption and ETF custody revenue ($500M+ opportunity)."
     }
   ],
   "ai_synthesis": {
