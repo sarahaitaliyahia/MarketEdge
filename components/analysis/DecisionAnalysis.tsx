@@ -1,5 +1,8 @@
 "use client"
 
+import { useState } from "react"
+import { X, TrendingUp, TrendingDown, AlertCircle } from "lucide-react"
+
 interface Company {
   ticker: string
   position: number
@@ -30,12 +33,47 @@ interface DecisionAnalysisProps {
 }
 
 export default function DecisionAnalysis({ decisionData, companies, confidenceMetrics }: DecisionAnalysisProps) {
+  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null)
   const ai_synthesis = decisionData?.analysis?.ai_synthesis
   
   console.log('[DecisionAnalysis] Decision data:', decisionData)
   console.log('[DecisionAnalysis] ai_synthesis:', ai_synthesis)
+  console.log('[DecisionAnalysis] Companies for heatmap:', companies)
 
   if (!ai_synthesis && !companies) return null
+
+  // Color mapping based on position (-1 to 1)
+  const getColor = (position: number): string => {
+    if (position >= 0.6) return "#16a34a" // green-600
+    if (position >= 0.3) return "#22c55e" // green-500
+    if (position >= 0.1) return "#86efac" // green-300
+    if (position >= -0.1) return "#fde047" // yellow-300
+    if (position >= -0.3) return "#fb923c" // orange-400
+    if (position >= -0.6) return "#f87171" // red-400
+    return "#dc2626" // red-600
+  }
+
+  const getSentiment = (position: number): { label: string; icon: React.ReactNode; color: string } => {
+    if (position >= 0.3) {
+      return {
+        label: "Bullish",
+        icon: <TrendingUp className="h-4 w-4" />,
+        color: "text-green-600",
+      }
+    } else if (position <= -0.3) {
+      return {
+        label: "Bearish",
+        icon: <TrendingDown className="h-4 w-4" />,
+        color: "text-red-600",
+      }
+    } else {
+      return {
+        label: "Neutral",
+        icon: <AlertCircle className="h-4 w-4" />,
+        color: "text-yellow-600",
+      }
+    }
+  }
 
   // Use summary for Strategic Summary (filtering success messages)
   const strategicSummary = ai_synthesis?.summary
@@ -76,7 +114,7 @@ export default function DecisionAnalysis({ decisionData, companies, confidenceMe
               
               return sections.map((section, idx) => (
                 <div 
-                  key={idx}
+                  key={`rec-${idx}`}
                   className="bg-white border-l-4 border-blue-600 p-4 rounded shadow-sm"
                 >
                   <div className="text-sm text-gray-900 leading-relaxed whitespace-pre-line">
@@ -86,6 +124,174 @@ export default function DecisionAnalysis({ decisionData, companies, confidenceMe
               ))
             })()}
           </div>
+        </div>
+      )}
+
+      {/* Company Position Heat Map */}
+      {companies && companies.length > 0 && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between mb-2">
+            <h5 className="font-semibold text-foreground">Company Position Heat Map</h5>
+          </div>
+
+          {/* Heatmap Grid */}
+          <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+            <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
+              {[...companies].sort((a, b) => b.position - a.position).map((company) => (
+                <button
+                  key={company.ticker}
+                  type="button"
+                  onClick={() => setSelectedCompany(company)}
+                  className="relative group cursor-pointer rounded-lg p-3 transition-all duration-200 hover:scale-110 hover:z-10 hover:shadow-xl"
+                  style={{ backgroundColor: getColor(company.position) }}
+                >
+                  <div className="flex flex-col items-center justify-center text-center">
+                    <div className="font-bold text-xs text-white drop-shadow-md">
+                      {company.ticker}
+                    </div>
+                    <div className="text-white/90 text-[10px] font-semibold mt-1">
+                      {(company.position * 100).toFixed(0)}%
+                    </div>
+                  </div>
+
+                  {/* Tooltip */}
+                  <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block bg-gray-900 text-white text-xs rounded-lg px-3 py-2 whitespace-nowrap shadow-xl z-20 pointer-events-none">
+                    <div className="font-semibold">{company.ticker}</div>
+                    <div className="text-white/90">Position: {(company.position * 100).toFixed(1)}%</div>
+                    <div className="text-white/90">Confidence: {(company.confidence_level * 100).toFixed(0)}%</div>
+                    <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-l-4 border-l-transparent border-r-4 border-r-transparent border-t-4 border-t-gray-900"></div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Color Legend */}
+          <div className="flex items-center justify-center gap-2 text-xs">
+            <span className="text-foreground/60">Bearish</span>
+            <div className="flex gap-1">
+              <div className="w-6 h-4 rounded" style={{ backgroundColor: "#dc2626" }}></div>
+              <div className="w-6 h-4 rounded" style={{ backgroundColor: "#f87171" }}></div>
+              <div className="w-6 h-4 rounded" style={{ backgroundColor: "#fb923c" }}></div>
+              <div className="w-6 h-4 rounded" style={{ backgroundColor: "#fde047" }}></div>
+              <div className="w-6 h-4 rounded" style={{ backgroundColor: "#86efac" }}></div>
+              <div className="w-6 h-4 rounded" style={{ backgroundColor: "#22c55e" }}></div>
+              <div className="w-6 h-4 rounded" style={{ backgroundColor: "#16a34a" }}></div>
+            </div>
+            <span className="text-foreground/60">Bullish</span>
+          </div>
+
+          {/* Company Detail Modal */}
+          {selectedCompany && (
+            <div
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-300"
+              onClick={() => setSelectedCompany(null)}
+              role="dialog"
+              aria-modal="true"
+            >
+              <div
+                className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-in zoom-in-95 slide-in-from-bottom-4 duration-300"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Header */}
+                <div className="sticky top-0 bg-gradient-to-br from-blue-50 to-blue-100/50 border-b border-blue-200 p-6 rounded-t-2xl">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h2 className="text-3xl font-bold text-foreground">{selectedCompany.ticker}</h2>
+                        <div className={`${getSentiment(selectedCompany.position).color} bg-white/80 px-3 py-1 rounded-full border flex items-center gap-1`}>
+                          {getSentiment(selectedCompany.position).icon}
+                          <span className="font-semibold text-sm">{getSentiment(selectedCompany.position).label}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setSelectedCompany(null)}
+                      className="h-8 w-8 rounded-full bg-white/80 hover:bg-white flex items-center justify-center transition-colors shadow-sm"
+                      type="button"
+                    >
+                      <X className="h-5 w-5 text-gray-600" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Content */}
+                <div className="p-6 space-y-6">
+                  {/* Position */}
+                  <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 p-5 rounded-xl border border-blue-200">
+                    <h3 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
+                      <TrendingUp className="h-5 w-5 text-blue-600" />
+                      Predicted Position
+                    </h3>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-foreground/70">Market Position:</span>
+                        <span className="font-bold text-xl">{(selectedCompany.position * 100).toFixed(1)}%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                        <div
+                          className="h-full transition-all duration-500"
+                          style={{
+                            width: `${((selectedCompany.position + 1) / 2) * 100}%`,
+                            backgroundColor: getColor(selectedCompany.position),
+                          }}
+                        ></div>
+                      </div>
+                      <div className="flex justify-between text-xs text-foreground/60">
+                        <span>-100% (Bearish)</span>
+                        <span>0% (Neutral)</span>
+                        <span>+100% (Bullish)</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Confidence */}
+                  <div className="bg-gradient-to-br from-purple-50 to-purple-100/50 p-5 rounded-xl border border-purple-200">
+                    <h3 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
+                      <AlertCircle className="h-5 w-5 text-purple-600" />
+                      Confidence Level
+                    </h3>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-foreground/70">Model Confidence:</span>
+                        <span className="font-bold text-xl">{(selectedCompany.confidence_level * 100).toFixed(0)}%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                        <div
+                          className="h-full bg-purple-600 transition-all duration-500"
+                          style={{ width: `${selectedCompany.confidence_level * 100}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Reasoning */}
+                  {selectedCompany.reasoning && (
+                    <div className="bg-gradient-to-br from-green-50 to-green-100/50 p-5 rounded-xl border border-green-200">
+                      <h3 className="text-lg font-semibold text-foreground mb-3">Analysis Reasoning</h3>
+                      <p className="text-foreground/80 leading-relaxed text-sm">{selectedCompany.reasoning}</p>
+                    </div>
+                  )}
+
+                  {/* Regulatory Hook */}
+                  {selectedCompany.regulatory_hook && (
+                    <div className="bg-gradient-to-br from-orange-50 to-orange-100/50 p-5 rounded-xl border border-orange-200">
+                      <h3 className="text-lg font-semibold text-foreground mb-3">Regulatory Impact</h3>
+                      <p className="text-foreground/80 leading-relaxed text-sm">{selectedCompany.regulatory_hook}</p>
+                    </div>
+                  )}
+
+                  {/* Business Impact */}
+                  {selectedCompany.business_impact && (
+                    <div className="bg-gradient-to-br from-indigo-50 to-indigo-100/50 p-5 rounded-xl border border-indigo-200">
+                      <h3 className="text-lg font-semibold text-foreground mb-3">Business Impact</h3>
+                      <p className="text-foreground/80 leading-relaxed text-sm">{selectedCompany.business_impact}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
